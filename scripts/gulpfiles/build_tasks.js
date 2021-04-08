@@ -116,8 +116,8 @@ function compile(compilerOptions, opt_verbose, opt_warnings_as_error,
   const options = {};
   options.compilation_level = 'SIMPLE_OPTIMIZATIONS';
   options.warning_level = opt_verbose ? 'VERBOSE' : 'DEFAULT';
-  options.language_in = 'ECMASCRIPT5_STRICT';
-  options.language_out = 'ECMASCRIPT5_STRICT';
+  options.language_in = 'ECMASCRIPT6_STRICT';
+  options.language_out = 'ECMASCRIPT6_STRICT';
   options.rewrite_polyfills = false;
   options.hide_warnings_for = 'node_modules';
   if (opt_warnings_as_error || opt_strict_typechecker) {
@@ -291,6 +291,14 @@ function buildPython() {
 };
 
 /**
+ * This task builds the euslisp generator.
+ *     euslisp_compressed.js
+ */
+function buildEusLisp() {
+  return buildGenerator('euslisp', 'EusLisp');
+};
+
+/**
  * This task builds the php generator.
  *     php_compressed.js
  */
@@ -318,6 +326,7 @@ function buildDart() {
  * This tasks builds all the generators:
  *     javascript_compressed.js
  *     python_compressed.js
+ *     euslisp_compressed.js
  *     php_compressed.js
  *     lua_compressed.js
  *     dart_compressed.js
@@ -325,6 +334,7 @@ function buildDart() {
 const buildGenerators = gulp.parallel(
   buildJavascript,
   buildPython,
+  buildEusLisp,
   buildPHP,
   buildLua,
   buildDart
