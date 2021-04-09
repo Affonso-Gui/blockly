@@ -47,8 +47,7 @@ Blockly.EusLisp['controls_if'] = function(block) {
   do {
     conditionCode = Blockly.EusLisp.valueToCode(block, 'IF' + n,
         Blockly.EusLisp.ORDER_NONE) || 'nil';
-    branchCode = Blockly.EusLisp.statementToCode(block, 'DO' + n) ||
-        Blockly.EusLisp.PASS;
+    branchCode = Blockly.EusLisp.statementToCode(block, 'DO' + n);
     if (Blockly.EusLisp.STATEMENT_SUFFIX) {
       branchCode = Blockly.EusLisp.prefixLines(
           Blockly.EusLisp.injectId(Blockly.EusLisp.STATEMENT_SUFFIX, block),
@@ -60,8 +59,7 @@ Blockly.EusLisp['controls_if'] = function(block) {
   } while (block.getInput('IF' + n));
 
   if (block.getInput('ELSE') || Blockly.EusLisp.STATEMENT_SUFFIX) {
-    branchCode = Blockly.EusLisp.statementToCode(block, 'ELSE') ||
-        Blockly.EusLisp.PASS;
+    branchCode = Blockly.EusLisp.statementToCode(block, 'ELSE');
     if (Blockly.EusLisp.STATEMENT_SUFFIX) {
       branchCode = Blockly.EusLisp.prefixLines(
           Blockly.EusLisp.injectId(Blockly.EusLisp.STATEMENT_SUFFIX, block),

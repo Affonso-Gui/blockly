@@ -138,11 +138,6 @@ Blockly.EusLisp.isInitialized = false;
  * @this {Blockly.Generator}
  */
 Blockly.EusLisp.init = function(workspace) {
-  /**
-   * Empty loops or conditionals are not allowed in Python.
-   */
-  // this.INDENT = '';
-  Blockly.EusLisp.PASS = '';
   // Create a dictionary of definitions to be printed before the code.
   Blockly.EusLisp.definitions_ = Object.create(null);
   // Create a dictionary mapping desired function names in definitions_
