@@ -15,6 +15,36 @@ goog.provide('Blockly.EusLisp.loops');
 goog.require('Blockly.EusLisp');
 
 
+/**
+ * This is the text used to implement a <pre>continue</pre>.
+ * It is also used to recognise <pre>continue</pre>s in generated code so that
+ * the appropriate label can be put at the end of the loop body.
+ * @const {string}
+ */
+Blockly.EusLisp.CONTINUE_STATEMENT = '(go :continue)';
+
+/**
+ * If the loop body contains a "(go :continue)" statement, add a continue label
+ * to the loop body. Slightly inefficient, as continue labels will be generated
+ * in all outer loops, but this is safer than duplicating the logic of
+ * blockToCode.
+ *
+ * @param {string} branch Generated code of the loop body
+ * @return {string} Generated label or '' if unnecessary
+ * @private
+ */
+Blockly.EusLisp.addContinueLabel_ = function(branch) {
+  if (branch.indexOf(Blockly.EusLisp.CONTINUE_STATEMENT) != -1) {
+    // False positives are possible (e.g. a string literal), but are harmless.
+    var code = brack_it('tagbody', branch, ':continue');
+    return code;
+  } else {
+    return branch;
+  }
+};
+
+
+
 Blockly.EusLisp['controls_repeat_ext'] = function(block) {
   // Repeat n times.
   if (block.getField('TIMES')) {
@@ -26,7 +56,8 @@ Blockly.EusLisp['controls_repeat_ext'] = function(block) {
         Blockly.EusLisp.ORDER_NONE) || '0';
   }
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
-  branch = Blockly.EusLisp.addLoopTrap(branch, block) || Blockly.EusLisp.PASS;
+  branch = Blockly.EusLisp.addLoopTrap(branch, block);
+  branch = Blockly.EusLisp.addContinueLabel_(branch);
   var loopVar = Blockly.EusLisp.variableDB_.getDistinctName(
       'count', Blockly.VARIABLE_CATEGORY_NAME);
   var code = brack_it('dotimes', brack_it(loopVar, repeats), branch);
@@ -42,7 +73,8 @@ Blockly.EusLisp['controls_whileUntil'] = function(block) {
       until ? Blockly.EusLisp.ORDER_LOGICAL_NOT :
       Blockly.EusLisp.ORDER_NONE) || 'nil';
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
-  branch = Blockly.EusLisp.addLoopTrap(branch, block) || Blockly.EusLisp.PASS;
+  branch = Blockly.EusLisp.addLoopTrap(branch, block);
+  branch = Blockly.EusLisp.addContinueLabel_(branch);
   if (until) {
     argument0 = brack_it('not', argument0);
   }
@@ -61,7 +93,8 @@ Blockly.EusLisp['controls_for'] = function(block) {
   var increment = Blockly.EusLisp.valueToCode(block, 'BY',
       Blockly.EusLisp.ORDER_NONE) || '1';
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
-  branch = Blockly.EusLisp.addLoopTrap(branch, block) || Blockly.EusLisp.PASS;
+  branch = Blockly.EusLisp.addLoopTrap(branch, block);
+  branch = Blockly.EusLisp.addContinueLabel_(branch);
 
   var code;
   if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1) &&
@@ -69,9 +102,14 @@ Blockly.EusLisp['controls_for'] = function(block) {
     // All arguments are simple numbers.
     var step = Math.abs(Number(increment));
     var up = Number(argument0) <= Number(argument1);
-    code = `(do ((${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${step})))` + '\n' +
-           `    ((${up?'>':'<'} ${variable0} ${argument1}))` + '\n' +
-           `  ${branch})` + '\n';
+    if (argument0 == 0 && step == 1 && up) {
+      code = `(dotimes (${variable0} ${argument1})` +
+             `${branch?'\n  ':''}` + `${branch})`;
+    } else {
+      code = `(do ((${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${step})))` + '\n' +
+             `    ((${up?'>':'<'} ${variable0} ${argument1}))` +
+             `${branch?'\n  ':''}` + `${branch})` + '\n';
+    }
   } else if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1)) {
     var up = Number(argument0) <= Number(argument1);
     var incVar = Blockly.EusLisp.variableDB_.getDistinctName(
@@ -129,7 +167,8 @@ Blockly.EusLisp['controls_forEach'] = function(block) {
   var argument0 = Blockly.EusLisp.valueToCode(block, 'LIST',
       Blockly.EusLisp.ORDER_RELATIONAL) || 'nil';
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
-  branch = Blockly.EusLisp.addLoopTrap(branch, block) || Blockly.EusLisp.PASS;
+  branch = Blockly.EusLisp.addLoopTrap(branch, block);
+  branch = Blockly.EusLisp.addContinueLabel_(branch);
   var code = brack_it('dolist', brack_it(variable0, argument0), branch);
   return code;
 };
@@ -160,7 +199,7 @@ Blockly.EusLisp['controls_flow_statements'] = function(block) {
     case 'BREAK':
       return xfix + '(return)';
     case 'CONTINUE':
-      return xfix + 'continue\n';
+      return xfix + Blockly.EusLisp.CONTINUE_STATEMENT;
   }
   throw Error('Unknown flow statement.');
 };
