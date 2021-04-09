@@ -102,7 +102,6 @@ Blockly.EusLisp['controls_whileUntil'] = function(block) {
   // Do while/until loop.
   var until = block.getFieldValue('MODE') == 'UNTIL';
   var argument0 = Blockly.EusLisp.valueToCode(block, 'BOOL',
-      until ? Blockly.EusLisp.ORDER_LOGICAL_NOT :
       Blockly.EusLisp.ORDER_NONE) || 'nil';
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
   branch = Blockly.EusLisp.addLoopTrap(branch, block);
@@ -206,7 +205,7 @@ Blockly.EusLisp['controls_forEach'] = function(block) {
   var variable0 = Blockly.EusLisp.variableDB_.getName(
       block.getFieldValue('VAR'), Blockly.VARIABLE_CATEGORY_NAME);
   var argument0 = Blockly.EusLisp.valueToCode(block, 'LIST',
-      Blockly.EusLisp.ORDER_RELATIONAL) || 'nil';
+      Blockly.EusLisp.ORDER_NONE) || 'nil';
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
   branch = Blockly.EusLisp.addLoopTrap(branch, block);
   branch = Blockly.EusLisp.addContinueLabel_(branch, block, 'DO');

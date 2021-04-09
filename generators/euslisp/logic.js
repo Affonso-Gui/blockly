@@ -98,23 +98,22 @@ Blockly.EusLisp['logic_compare'] = function(block) {
     'GTE': '>='
   };
   var operator = OPERATORS[block.getFieldValue('OP')];
-  var order = Blockly.EusLisp.ORDER_RELATIONAL;
-  var argument0 = Blockly.EusLisp.valueToCode(block, 'A', order) || '0';
-  var argument1 = Blockly.EusLisp.valueToCode(block, 'B', order) || '0';
+  var argument0 = Blockly.EusLisp.valueToCode(block, 'A',
+      Blockly.EusLisp.ORDER_NONE) || '0';
+  var argument1 = Blockly.EusLisp.valueToCode(block, 'B',
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var code = brack_it(operator, argument0, argument1);
   if (block.getFieldValue('OP') == 'NEQ') {
     code = brack_it('not', code);
   }
-  return [code, order];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['logic_operation'] = function(block) {
   // Operations 'and', 'or'.
   var operator = (block.getFieldValue('OP') == 'AND') ? 'and' : 'or';
-  var order = (operator == 'and') ? Blockly.EusLisp.ORDER_LOGICAL_AND :
-      Blockly.EusLisp.ORDER_LOGICAL_OR;
-  var argument0 = Blockly.EusLisp.valueToCode(block, 'A', order);
-  var argument1 = Blockly.EusLisp.valueToCode(block, 'B', order);
+  var argument0 = Blockly.EusLisp.valueToCode(block, 'A', Blockly.EusLisp.ORDER_NONE);
+  var argument1 = Blockly.EusLisp.valueToCode(block, 'B', Blockly.EusLisp.ORDER_NONE);
   if (!argument0 && !argument1) {
     // If there are no arguments, then the return value is false.
     argument0 = 'nil';
@@ -131,15 +130,15 @@ Blockly.EusLisp['logic_operation'] = function(block) {
   }
 
   var code = brack_it(operator, argument0, argument1);
-  return [code, order];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['logic_negate'] = function(block) {
   // Negation.
   var argument0 = Blockly.EusLisp.valueToCode(block, 'BOOL',
-      Blockly.EusLisp.ORDER_LOGICAL_NOT) || 't';
+      Blockly.EusLisp.ORDER_NONE) || 't';
   var code = brack_it('not', argument0);
-  return [code, Blockly.EusLisp.ORDER_LOGICAL_NOT];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['logic_boolean'] = function(block) {
@@ -156,11 +155,11 @@ Blockly.EusLisp['logic_null'] = function(block) {
 Blockly.EusLisp['logic_ternary'] = function(block) {
   // Ternary operator.
   var value_if = Blockly.EusLisp.valueToCode(block, 'IF',
-      Blockly.EusLisp.ORDER_CONDITIONAL) || 'nil';
+      Blockly.EusLisp.ORDER_NONE) || 'nil';
   var value_then = Blockly.EusLisp.valueToCode(block, 'THEN',
-      Blockly.EusLisp.ORDER_CONDITIONAL) || 'nil';
+      Blockly.EusLisp.ORDER_NONE) || 'nil';
   var value_else = Blockly.EusLisp.valueToCode(block, 'ELSE',
-      Blockly.EusLisp.ORDER_CONDITIONAL) || 'nil';
+      Blockly.EusLisp.ORDER_NONE) || 'nil';
   var code = brack_it('if', value_if, value_then, value_else);
-  return [code, Blockly.EusLisp.ORDER_CONDITIONAL];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };

@@ -24,38 +24,28 @@ Blockly.EusLisp['math_number'] = function(block) {
   var order;
   if (code == Infinity) {
     code = '*inf*';
-    order = Blockly.EusLisp.ORDER_FUNCTION_CALL;
   } else if (code == -Infinity) {
     code = '*-inf*';
-    order = Blockly.EusLisp.ORDER_UNARY_SIGN;
-  } else {
-    order = code < 0 ? Blockly.EusLisp.ORDER_UNARY_SIGN :
-            Blockly.EusLisp.ORDER_ATOMIC;
   }
-  return [code, order];
+  return [code, Blockly.EusLisp.ORDER_ATOMIC];
 };
 
 Blockly.EusLisp['math_arithmetic'] = function(block) {
   // Basic arithmetic operators, and power.
   var OPERATORS = {
-    'ADD': ['+', Blockly.EusLisp.ORDER_ADDITIVE],
-    'MINUS': ['-', Blockly.EusLisp.ORDER_ADDITIVE],
-    'MULTIPLY': ['*', Blockly.EusLisp.ORDER_MULTIPLICATIVE],
-    'DIVIDE': ['/', Blockly.EusLisp.ORDER_MULTIPLICATIVE],
-    'POWER': ['expt', Blockly.EusLisp.ORDER_EXPONENTIATION]
+    'ADD': '+',
+    'MINUS': '-',
+    'MULTIPLY': '*',
+    'DIVIDE': '/',
+    'POWER': 'expt',
   };
-  var tuple = OPERATORS[block.getFieldValue('OP')];
-  var operator = tuple[0];
-  var order = tuple[1];
-  var argument0 = Blockly.EusLisp.valueToCode(block, 'A', order) || '0';
-  var argument1 = Blockly.EusLisp.valueToCode(block, 'B', order) || '0';
+  var operator = OPERATORS[block.getFieldValue('OP')];
+  var argument0 = Blockly.EusLisp.valueToCode(block, 'A',
+      Blockly.EusLisp.ORDER_NONE) || '0';
+  var argument1 = Blockly.EusLisp.valueToCode(block, 'B',
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var code = brack_it(operator, argument0, argument1);
-  return [code, order];
-  // In case of 'DIVIDE', division between integers returns different results
-  // in Python 2 and 3. However, is not an issue since Blockly does not
-  // guarantee identical results in all languages.  To do otherwise would
-  // require every operator to be wrapped in a function call.  This would kill
-  // legibility of the generated code.
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_single'] = function(block) {
@@ -66,12 +56,12 @@ Blockly.EusLisp['math_single'] = function(block) {
   if (operator == 'NEG') {
     // Negation is a special case given its different operator precedence.
     code = Blockly.EusLisp.valueToCode(block, 'NUM',
-        Blockly.EusLisp.ORDER_UNARY_SIGN) || '0';
-    return [brack_it('-', code), Blockly.EusLisp.ORDER_UNARY_SIGN];
+        Blockly.EusLisp.ORDER_NONE) || '0';
+    return [brack_it('-', code), Blockly.EusLisp.ORDER_FUNCTION_CALL];
   }
   if (operator == 'SIN' || operator == 'COS' || operator == 'TAN') {
     arg = Blockly.EusLisp.valueToCode(block, 'NUM',
-        Blockly.EusLisp.ORDER_MULTIPLICATIVE) || '0';
+        Blockly.EusLisp.ORDER_NONE) || '0';
   } else {
     arg = Blockly.EusLisp.valueToCode(block, 'NUM',
         Blockly.EusLisp.ORDER_NONE) || '0';
@@ -134,18 +124,18 @@ Blockly.EusLisp['math_single'] = function(block) {
     default:
       throw Error('Unknown math operator: ' + operator);
   }
-  return [code, Blockly.EusLisp.ORDER_MULTIPLICATIVE];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_constant'] = function(block) {
   // Constants: PI, E, the Golden Ratio, sqrt(2), 1/sqrt(2), INFINITY.
   var CONSTANTS = {
-    'PI': ['pi', Blockly.EusLisp.ORDER_MEMBER],
-    'E': ['(exp 1)', Blockly.EusLisp.ORDER_MEMBER],
+    'PI': ['pi', Blockly.EusLisp.ORDER_ATOMIC],
+    'E': ['(exp 1)', Blockly.EusLisp.ORDER_FUNCTION_CALL],
     'GOLDEN_RATIO': ['(/ (1+ (sqrt 5)) 2)',
-                     Blockly.EusLisp.ORDER_MULTIPLICATIVE],
-    'SQRT2': ['(sqrt 2)', Blockly.EusLisp.ORDER_MEMBER],
-    'SQRT1_2': ['(sqrt 1/2)', Blockly.EusLisp.ORDER_MEMBER],
+                     Blockly.EusLisp.ORDER_FUNCTION_CALL],
+    'SQRT2': ['(sqrt 2)', Blockly.EusLisp.ORDER_FUNCTION_CALL],
+    'SQRT1_2': ['(sqrt 1/2)', Blockly.EusLisp.ORDER_FUNCTION_CALL],
     'INFINITY': ['*inf*', Blockly.EusLisp.ORDER_ATOMIC]
   };
   var constant = block.getFieldValue('CONSTANT');
@@ -156,7 +146,7 @@ Blockly.EusLisp['math_number_property'] = function(block) {
   // Check if a number is even, odd, prime, whole, positive, or negative
   // or if it is divisible by certain number. Returns true or false.
   var number_to_check = Blockly.EusLisp.valueToCode(block, 'NUMBER_TO_CHECK',
-      Blockly.EusLisp.ORDER_MULTIPLICATIVE) || '0';
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var dropdown_property = block.getFieldValue('PROPERTY');
   var code;
   if (dropdown_property == 'PRIME') {
@@ -199,7 +189,7 @@ Blockly.EusLisp['math_number_property'] = function(block) {
       break;
     case 'DIVISIBLE_BY':
       var divisor = Blockly.EusLisp.valueToCode(block, 'DIVISOR',
-          Blockly.EusLisp.ORDER_MULTIPLICATIVE);
+          Blockly.EusLisp.ORDER_NONE);
       // If 'divisor' is some code that evals to 0, Python will raise an error.
       if (!divisor || divisor == '0') {
         return ['nil', Blockly.EusLisp.ORDER_ATOMIC];
@@ -207,13 +197,13 @@ Blockly.EusLisp['math_number_property'] = function(block) {
       code = brack_it('zerop', brack_it('mod', number_to_check, divisor));
       break;
   }
-  return [code, Blockly.EusLisp.ORDER_RELATIONAL];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_change'] = function(block) {
   // Add to a variable in place.
   var argument0 = Blockly.EusLisp.valueToCode(block, 'DELTA',
-      Blockly.EusLisp.ORDER_ADDITIVE) || '0';
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var varName = Blockly.EusLisp.variableDB_.getName(block.getFieldValue('VAR'),
       Blockly.VARIABLE_CATEGORY_NAME);
   if (argument0 == '1') {
@@ -295,11 +285,11 @@ Blockly.EusLisp['math_on_list'] = function(block) {
 Blockly.EusLisp['math_modulo'] = function(block) {
   // Remainder computation.
   var argument0 = Blockly.EusLisp.valueToCode(block, 'DIVIDEND',
-      Blockly.EusLisp.ORDER_MULTIPLICATIVE) || '0';
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var argument1 = Blockly.EusLisp.valueToCode(block, 'DIVISOR',
-      Blockly.EusLisp.ORDER_MULTIPLICATIVE) || '0';
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var code = brack_it('mod', argument0, argument1);
-  return [code, Blockly.EusLisp.ORDER_MULTIPLICATIVE];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_constrain'] = function(block) {
@@ -309,7 +299,7 @@ Blockly.EusLisp['math_constrain'] = function(block) {
   var argument1 = Blockly.EusLisp.valueToCode(block, 'LOW',
       Blockly.EusLisp.ORDER_NONE) || '0';
   var argument2 = Blockly.EusLisp.valueToCode(block, 'HIGH',
-      Blockly.EusLisp.ORDER_NONE) || 'float(\'inf\')';
+      Blockly.EusLisp.ORDER_NONE) || '*inf*';
   var code = brack_it('min', brack_it('max', argument0, argument1), argument2);
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
@@ -341,5 +331,5 @@ Blockly.EusLisp['math_atan2'] = function(block) {
   var argument1 = Blockly.EusLisp.valueToCode(block, 'Y',
       Blockly.EusLisp.ORDER_NONE) || '0';
   var code = brack_it('rad2deg', brack_it('atan2', argument1, argument0));
-  return [code, Blockly.EusLisp.ORDER_MULTIPLICATIVE];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };

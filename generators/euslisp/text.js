@@ -24,7 +24,7 @@ Blockly.EusLisp['text'] = function(block) {
 Blockly.EusLisp['text_multiline'] = function(block) {
   // Text value.
   var code = Blockly.EusLisp.multiline_quote_(block.getFieldValue('TEXT'));
-  var order = code.indexOf('+') != -1 ? Blockly.EusLisp.ORDER_ADDITIVE :
+  var order = code.startsWith('(') != -1 ? Blockly.EusLisp.ORDER_FUNCTION_CALL :
       Blockly.EusLisp.ORDER_ATOMIC;
   return [code, order];
 };
@@ -70,7 +70,7 @@ Blockly.EusLisp['text_join'] = function(block) {
       var code = brack_it('concatenate', 'string',
           Blockly.EusLisp.text.forceString_(element0)[0],
           Blockly.EusLisp.text.forceString_(element1)[0]);
-      return [code, Blockly.EusLisp.ORDER_ADDITIVE];
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       break;
     default:
       var elements = [];
@@ -107,7 +107,7 @@ Blockly.EusLisp['text_isEmpty'] = function(block) {
   var text = Blockly.EusLisp.valueToCode(block, 'VALUE',
       Blockly.EusLisp.ORDER_NONE) || '""';
   var code = brack_it('null-string-p', text);
-  return [code, Blockly.EusLisp.ORDER_LOGICAL_NOT];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['text_indexOf'] = function(block) {
@@ -117,10 +117,10 @@ Blockly.EusLisp['text_indexOf'] = function(block) {
   var substring = Blockly.EusLisp.valueToCode(block, 'FIND',
       Blockly.EusLisp.ORDER_NONE) || '""';
   var text = Blockly.EusLisp.valueToCode(block, 'VALUE',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   var code = text + '.' + operator + '(' + substring + ')';
   if (block.workspace.options.oneBasedIndex) {
-    return [code + ' + 1', Blockly.EusLisp.ORDER_ADDITIVE];
+    return [code + ' + 1', Blockly.EusLisp.ORDER_FUNCTION_CALL];
   }
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
@@ -129,27 +129,25 @@ Blockly.EusLisp['text_charAt'] = function(block) {
   // Get letter at index.
   // Note: Until January 2013 this block did not have the WHERE input.
   var where = block.getFieldValue('WHERE') || 'FROM_START';
-  var textOrder = (where == 'RANDOM') ? Blockly.EusLisp.ORDER_NONE :
-      Blockly.EusLisp.ORDER_MEMBER;
-  var text = Blockly.EusLisp.valueToCode(block, 'VALUE', textOrder) || '""';
+  var text = Blockly.EusLisp.valueToCode(block, 'VALUE', Blockly.EusLisp.ORDER_NONE) || '""';
   switch (where) {
     case 'FIRST':
       var code = brack_it('elt', text, 0);
-      return [code, Blockly.EusLisp.ORDER_MEMBER];
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'LAST':
       var code = brack_it('elt', text, brack_it('1-', brack_it('length', text)));
-      return [code, Blockly.EusLisp.ORDER_MEMBER];
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'FROM_START':
       var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
       var code = brack_it('elt', text, at);
-      return [code, Blockly.EusLisp.ORDER_MEMBER];
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'FROM_END':
       var at = Blockly.EusLisp.getAdjustedInt(block, 'AT', 1, true);
       var code = brack_it('elt', text, brack_it('-', brack_it('length', text), at));
-      return [code, Blockly.EusLisp.ORDER_MEMBER];
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'RANDOM':
       var code = brack_it('elt', text, brack_it('random', brack_it('length', text)));
-      return [code, Blockly.EusLisp.ORDER_MEMBER];
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
   }
   throw Error('Unhandled option (text_charAt).');
 };
@@ -159,7 +157,7 @@ Blockly.EusLisp['text_getSubstring'] = function(block) {
   var where1 = block.getFieldValue('WHERE1');
   var where2 = block.getFieldValue('WHERE2');
   var text = Blockly.EusLisp.valueToCode(block, 'STRING',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   switch (where1) {
     case 'FROM_START':
       var at1 = Blockly.EusLisp.getAdjustedInt(block, 'AT1');
@@ -198,13 +196,13 @@ Blockly.EusLisp['text_getSubstring'] = function(block) {
       throw Error('Unhandled option (text_getSubstring)');
   }
   var code = brack_it('subseq', text, at1, at2);
-  return [code, Blockly.EusLisp.ORDER_MEMBER];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['text_changeCase'] = function(block) {
   // Change capitalization.
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   switch (Blockly.EusLisp.valueToCode(block, 'TEXT')) {
     case 'UPPERCASE':
       var code = brack_it('string-upcase', text);
@@ -245,7 +243,7 @@ Blockly.EusLisp['text_trim'] = function(block) {
   };
   var operator = OPERATORS[block.getFieldValue('MODE')];
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   var code = brack_it(operator, '" "', text);
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
@@ -286,7 +284,7 @@ Blockly.EusLisp['text_prompt'] = Blockly.EusLisp['text_prompt_ext'];
 
 Blockly.EusLisp['text_count'] = function(block) {
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   var sub = Blockly.EusLisp.valueToCode(block, 'SUB',
       Blockly.EusLisp.ORDER_NONE) || '""';
   var code = text + '.count(' + sub + ')';
@@ -295,18 +293,18 @@ Blockly.EusLisp['text_count'] = function(block) {
 
 Blockly.EusLisp['text_replace'] = function(block) {
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   var from = Blockly.EusLisp.valueToCode(block, 'FROM',
       Blockly.EusLisp.ORDER_NONE) || '""';
   var to = Blockly.EusLisp.valueToCode(block, 'TO',
       Blockly.EusLisp.ORDER_NONE) || '""';
   var code = text + '.replace(' + from + ', ' + to + ')';
-  return [code, Blockly.EusLisp.ORDER_MEMBER];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['text_reverse'] = function(block) {
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
-      Blockly.EusLisp.ORDER_MEMBER) || '""';
+      Blockly.EusLisp.ORDER_NONE) || '""';
   var code = brack_it('reverse', text);
-  return [code, Blockly.EusLisp.ORDER_MEMBER];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };

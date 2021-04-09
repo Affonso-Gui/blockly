@@ -74,57 +74,13 @@ Blockly.EusLisp.addReservedWords(
 
 /**
  * Order of operation ENUMs.
- * http://docs.python.org/reference/expressions.html#summary
+ * Only define atoms, cons and none, since EusLisp never
+ * needs auxiliary parenthesis
  */
 Blockly.EusLisp.ORDER_ATOMIC = 0;            // 0 "" ...
-Blockly.EusLisp.ORDER_COLLECTION = 1;        // tuples, lists, dictionaries
-Blockly.EusLisp.ORDER_STRING_CONVERSION = 1; // `expression...`
-Blockly.EusLisp.ORDER_MEMBER = 2.1;          // . []
-Blockly.EusLisp.ORDER_FUNCTION_CALL = 2.2;   // ()
-Blockly.EusLisp.ORDER_EXPONENTIATION = 3;    // **
-Blockly.EusLisp.ORDER_UNARY_SIGN = 4;        // + -
-Blockly.EusLisp.ORDER_BITWISE_NOT = 4;       // ~
-Blockly.EusLisp.ORDER_MULTIPLICATIVE = 5;    // * / // %
-Blockly.EusLisp.ORDER_ADDITIVE = 6;          // + -
-Blockly.EusLisp.ORDER_BITWISE_SHIFT = 7;     // << >>
-Blockly.EusLisp.ORDER_BITWISE_AND = 8;       // &
-Blockly.EusLisp.ORDER_BITWISE_XOR = 9;       // ^
-Blockly.EusLisp.ORDER_BITWISE_OR = 10;       // |
-Blockly.EusLisp.ORDER_RELATIONAL = 11;       // in, not in, is, is not,
-                                            //     <, <=, >, >=, <>, !=, ==
-Blockly.EusLisp.ORDER_LOGICAL_NOT = 12;      // not
-Blockly.EusLisp.ORDER_LOGICAL_AND = 13;      // and
-Blockly.EusLisp.ORDER_LOGICAL_OR = 14;       // or
-Blockly.EusLisp.ORDER_CONDITIONAL = 15;      // if else
-Blockly.EusLisp.ORDER_LAMBDA = 16;           // lambda
+Blockly.EusLisp.ORDER_FUNCTION_CALL = 2;     // ()
 Blockly.EusLisp.ORDER_NONE = 99;             // (...)
 
-/**
- * List of outer-inner pairings that do NOT require parentheses.
- * @type {!Array.<!Array.<number>>}
- */
-Blockly.EusLisp.ORDER_OVERRIDES = [
-  // (foo()).bar -> foo().bar
-  // (foo())[0] -> foo()[0]
-  [Blockly.EusLisp.ORDER_FUNCTION_CALL, Blockly.EusLisp.ORDER_MEMBER],
-  // (foo())() -> foo()()
-  [Blockly.EusLisp.ORDER_FUNCTION_CALL, Blockly.EusLisp.ORDER_FUNCTION_CALL],
-  // (foo.bar).baz -> foo.bar.baz
-  // (foo.bar)[0] -> foo.bar[0]
-  // (foo[0]).bar -> foo[0].bar
-  // (foo[0])[1] -> foo[0][1]
-  [Blockly.EusLisp.ORDER_MEMBER, Blockly.EusLisp.ORDER_MEMBER],
-  // (foo.bar)() -> foo.bar()
-  // (foo[0])() -> foo[0]()
-  [Blockly.EusLisp.ORDER_MEMBER, Blockly.EusLisp.ORDER_FUNCTION_CALL],
-
-  // not (not foo) -> not not foo
-  [Blockly.EusLisp.ORDER_LOGICAL_NOT, Blockly.EusLisp.ORDER_LOGICAL_NOT],
-  // a and (b and c) -> a and b and c
-  [Blockly.EusLisp.ORDER_LOGICAL_AND, Blockly.EusLisp.ORDER_LOGICAL_AND],
-  // a or (b or c) -> a or b or c
-  [Blockly.EusLisp.ORDER_LOGICAL_OR, Blockly.EusLisp.ORDER_LOGICAL_OR]
-];
 
 /**
  * Whether the init method has been called.

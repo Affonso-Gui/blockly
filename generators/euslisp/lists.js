@@ -31,7 +31,7 @@ Blockly.EusLisp['lists_create_with'] = function(block) {
         Blockly.EusLisp.ORDER_NONE) || 'nil';
   }
   var code = brack_it('list', ...elements);
-  return [code, Blockly.EusLisp.ORDER_ATOMIC];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['lists_repeat'] = function(block) {
@@ -39,9 +39,9 @@ Blockly.EusLisp['lists_repeat'] = function(block) {
   var item = Blockly.EusLisp.valueToCode(block, 'ITEM',
       Blockly.EusLisp.ORDER_NONE) || 'nil';
   var times = Blockly.EusLisp.valueToCode(block, 'NUM',
-      Blockly.EusLisp.ORDER_MULTIPLICATIVE) || '0';
+      Blockly.EusLisp.ORDER_NONE) || '0';
   var code = brack_it('make-list', times, ':initial-element', item);
-  return [code, Blockly.EusLisp.ORDER_MULTIPLICATIVE];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['lists_length'] = function(block) {
@@ -57,7 +57,7 @@ Blockly.EusLisp['lists_isEmpty'] = function(block) {
   var list = Blockly.EusLisp.valueToCode(block, 'VALUE',
       Blockly.EusLisp.ORDER_NONE) || '()';
   var code = brack_it('null', list);
-  return [code, Blockly.EusLisp.ORDER_LOGICAL_NOT];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['lists_indexOf'] = function(block) {
@@ -102,15 +102,13 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
   // Note: Until January 2013 this block did not have MODE or WHERE inputs.
   var mode = block.getFieldValue('MODE') || 'GET';
   var where = block.getFieldValue('WHERE') || 'FROM_START';
-  var listOrder = (where == 'RANDOM') ? Blockly.EusLisp.ORDER_NONE :
-      Blockly.EusLisp.ORDER_MEMBER;
-  var list = Blockly.EusLisp.valueToCode(block, 'VALUE', listOrder) || '()';
+  var list = Blockly.EusLisp.valueToCode(block, 'VALUE', Blockly.EusLisp.ORDER_NONE) || '()';
 
   switch (where) {
     case 'FIRST':
       if (mode == 'GET') {
         var code = brack_it('car', list);
-        return [code, Blockly.EusLisp.ORDER_MEMBER];
+        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else if (mode == 'GET_REMOVE') {
         var code = brack_it('pop', list);
         return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
@@ -122,7 +120,7 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
     case 'LAST':
       if (mode == 'GET') {
         var code = brack_it('car', brack_it('last', list));
-        return [code, Blockly.EusLisp.ORDER_MEMBER];
+        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else if (mode == 'GET_REMOVE') {
         var code = brack_it('prog1',
                             brack_it('last', list),
@@ -137,7 +135,7 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
       var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
       if (mode == 'GET') {
         var code = brack_it('nth', at, list);
-        return [code, Blockly.EusLisp.ORDER_MEMBER];
+        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else if (mode == 'GET_REMOVE') {
         var code = brack_it('prog1',
                             brack_it('nth', at, list),
@@ -153,7 +151,7 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
       at = brack_it('-', brack_it('length', list), at);
       if (mode == 'GET') {
         var code = brack_it('nth', at, list);
-        return [code, Blockly.EusLisp.ORDER_MEMBER];
+        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else if (mode == 'GET_REMOVE') {
         var code = brack_it('prog1',
                             brack_it('nth', at, list),
@@ -193,7 +191,7 @@ Blockly.EusLisp['lists_setIndex'] = function(block) {
   // Set element at index.
   // Note: Until February 2013 this block did not have MODE or WHERE inputs.
   var list = Blockly.EusLisp.valueToCode(block, 'LIST',
-      Blockly.EusLisp.ORDER_MEMBER) || '()';
+      Blockly.EusLisp.ORDER_NONE) || '()';
   var mode = block.getFieldValue('MODE') || 'GET';
   var where = block.getFieldValue('WHERE') || 'FROM_START';
   var value = Blockly.EusLisp.valueToCode(block, 'TO',
@@ -255,7 +253,7 @@ Blockly.EusLisp['lists_setIndex'] = function(block) {
 Blockly.EusLisp['lists_getSublist'] = function(block) {
   // Get sublist.
   var list = Blockly.EusLisp.valueToCode(block, 'LIST',
-      Blockly.EusLisp.ORDER_MEMBER) || '()';
+      Blockly.EusLisp.ORDER_NONE) || '()';
   var where1 = block.getFieldValue('WHERE1');
   var where2 = block.getFieldValue('WHERE2');
   switch (where1) {
@@ -291,7 +289,7 @@ Blockly.EusLisp['lists_getSublist'] = function(block) {
       throw Error('Unhandled option (lists_getSublist)');
   }
   var code = brack_it('subseq', list, at1, at2);
-  return [code, Blockly.EusLisp.ORDER_MEMBER];
+  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['lists_sort'] = function(block) {
@@ -324,7 +322,7 @@ Blockly.EusLisp['lists_split'] = function(block) {
   var mode = block.getFieldValue('MODE');
   if (mode == 'SPLIT') {
     var value_input = Blockly.EusLisp.valueToCode(block, 'INPUT',
-        Blockly.EusLisp.ORDER_MEMBER) || '""';
+        Blockly.EusLisp.ORDER_NONE) || '""';
     var value_delim = Blockly.EusLisp.valueToCode(block, 'DELIM',
         Blockly.EusLisp.ORDER_NONE);
     var code = value_input + '.split(' + value_delim + ')';
@@ -332,7 +330,7 @@ Blockly.EusLisp['lists_split'] = function(block) {
     var value_input = Blockly.EusLisp.valueToCode(block, 'INPUT',
         Blockly.EusLisp.ORDER_NONE) || '()';
     var value_delim = Blockly.EusLisp.valueToCode(block, 'DELIM',
-        Blockly.EusLisp.ORDER_MEMBER) || '""';
+        Blockly.EusLisp.ORDER_NONE) || '""';
     var functionName = Blockly.EusLisp.provideFunction_(
       'lists-join',
       ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + '(my-list delim):',
