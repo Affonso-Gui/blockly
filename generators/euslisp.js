@@ -5,7 +5,7 @@
  */
 
 /**
- * @fileoverview Helper functions for generating Python for blocks.
+ * @fileoverview Helper functions for generating EusLisp for blocks.
  * @author fraser@google.com (Neil Fraser)
  */
 'use strict';
@@ -24,7 +24,7 @@ function brack_it() {
 };
 
 /**
- * Python code generator.
+ * EusLisp code generator.
  * @type {!Blockly.Generator}
  */
 Blockly.EusLisp = new Blockly.Generator('EusLisp');
@@ -37,46 +37,40 @@ Blockly.EusLisp = new Blockly.Generator('EusLisp');
  * @private
  */
 Blockly.EusLisp.addReservedWords(
-    // import keyword
-    // print(','.join(sorted(keyword.kwlist)))
-    // https://docs.python.org/3/reference/lexical_analysis.html#keywords
-    // https://docs.python.org/2/reference/lexical_analysis.html#keywords
-    'False,None,True,and,as,assert,break,class,continue,def,del,elif,else,' +
-    'except,exec,finally,for,from,global,if,import,in,is,lambda,nonlocal,not,' +
-    'or,pass,print,raise,return,try,while,with,yield,' +
-    // https://docs.python.org/3/library/constants.html
-    // https://docs.python.org/2/library/constants.html
-    'NotImplemented,Ellipsis,__debug__,quit,exit,copyright,license,credits,' +
-    // >>> print(','.join(sorted(dir(__builtins__))))
-    // https://docs.python.org/3/library/functions.html
-    // https://docs.python.org/2/library/functions.html
-    'ArithmeticError,AssertionError,AttributeError,BaseException,' +
-    'BlockingIOError,BrokenPipeError,BufferError,BytesWarning,' +
-    'ChildProcessError,ConnectionAbortedError,ConnectionError,' +
-    'ConnectionRefusedError,ConnectionResetError,DeprecationWarning,EOFError,' +
-    'Ellipsis,EnvironmentError,Exception,FileExistsError,FileNotFoundError,' +
-    'FloatingPointError,FutureWarning,GeneratorExit,IOError,ImportError,' +
-    'ImportWarning,IndentationError,IndexError,InterruptedError,' +
-    'IsADirectoryError,KeyError,KeyboardInterrupt,LookupError,MemoryError,' +
-    'ModuleNotFoundError,NameError,NotADirectoryError,NotImplemented,' +
-    'NotImplementedError,OSError,OverflowError,PendingDeprecationWarning,' +
-    'PermissionError,ProcessLookupError,RecursionError,ReferenceError,' +
-    'ResourceWarning,RuntimeError,RuntimeWarning,StandardError,' +
-    'StopAsyncIteration,StopIteration,SyntaxError,SyntaxWarning,SystemError,' +
-    'SystemExit,TabError,TimeoutError,TypeError,UnboundLocalError,' +
-    'UnicodeDecodeError,UnicodeEncodeError,UnicodeError,' +
-    'UnicodeTranslateError,UnicodeWarning,UserWarning,ValueError,Warning,' +
-    'ZeroDivisionError,_,__build_class__,__debug__,__doc__,__import__,' +
-    '__loader__,__name__,__package__,__spec__,abs,all,any,apply,ascii,' +
-    'basestring,bin,bool,buffer,bytearray,bytes,callable,chr,classmethod,cmp,' +
-    'coerce,compile,complex,copyright,credits,delattr,dict,dir,divmod,' +
-    'enumerate,eval,exec,execfile,exit,file,filter,float,format,frozenset,' +
-    'getattr,globals,hasattr,hash,help,hex,id,input,int,intern,isinstance,' +
-    'issubclass,iter,len,license,list,locals,long,map,max,memoryview,min,' +
-    'next,object,oct,open,ord,pow,print,property,quit,range,raw_input,reduce,' +
-    'reload,repr,reversed,round,set,setattr,slice,sorted,staticmethod,str,' +
-    'sum,super,tuple,type,unichr,unicode,vars,xrange,zip'
-);
+  "*,**,***,+,++,+++,-," +
+  "*asynchronous-stream-functions*,*asynchronous-streams*," +
+  "*break-on-warning*,*debug*," +
+  "*default-pathname-defaults*,*default-readtable*," +
+  "*error-handler*,*error-output*," +
+  "*eusdir*,*eustop-hook*,*evalhook*,*exit-on-fatal-error*," +
+  "*features*,*history*,*history-index*,*history-max*,*history-sequence*," +
+  "*input-line*,*keyword-package*,*line-edit-dispatch*,*lisp-package*," +
+  "*load-path*,*load-verbose*,*loaded-modules*,*loader-current-directory*," +
+  "*machine*,*modules*,*os-version*,*package*," +
+  "*print-base*,*print-case*,*print-circle*,*print-length*,*print-level*,*print-object*,*print-structure*," +
+  "*program-name*,*prompt*,*prompt-string*," +
+  "*random-state*,*read-base*,*readtable*,*remote-port*,*replevel*,*reptype*," +
+  "*select-stream-vector*,*server-streams*,*signal-handlers*," +
+  "*standard-input*,*standard-output*,*symbol-input*,*system-package*," +
+  "*terminal-io*,*timed-functions*,*timer-job*,*top-selector*,*top-selector-interval*," +
+  "*toplevel*,*toplevel-hook*,*traced-functions*,*tracelevel*," +
+  "*try-unix*,*unix-package*,*user*,*user-package*," +
+  "*world-coords*,*world-coords2*," +
+  "pi,pi/2,-2pi,-pi,-pi/2,2pi," +
+  "af_inet,af_unix,array,array-dimension-limit,array-rank-limit," +
+  "bignum,bit-vector,broadcast-stream,carray,closure,compiled-code,complex," +
+  "cons,cstruct,cstructclass,euserror,extended-number,file-stream,float-vector," +
+  "foreign-code,foreign-pod,foreign-string,hash-table,integer-vector," +
+  "internal-time-units-per-second,io-stream,label-reference," +
+  "lisp-implementation-version,load-module," +
+  "least-negative-float,least-positive-float," +
+  "most-negative-fixnum,most-negative-float,most-positive-fixnum,most-positive-float," +
+  "long-float-epsilon,short-float-epsilon,single-float-epsilon," +
+  "metaclass,nil,object,package,pathname," +
+  "port-selector,propertied-object,queue,ratio,readtable," +
+  "socket-address,socket-port,socket-stream,sock_dgram,sock_stream,stream,string," +
+  "symbol,t,thread,url-pathname,vector,vectorclass,"
+)
 
 /**
  * Order of operation ENUMs.
@@ -169,7 +163,7 @@ Blockly.EusLisp.init = function(workspace) {
   var devVarList = Blockly.Variables.allDeveloperVariables(workspace);
   for (var i = 0; i < devVarList.length; i++) {
     defvars.push(Blockly.EusLisp.variableDB_.getName(devVarList[i],
-        Blockly.Names.DEVELOPER_VARIABLE_TYPE) + ' = None');
+        Blockly.Names.DEVELOPER_VARIABLE_TYPE));
   }
 
   // Add user variables, but only ones that are being used.
@@ -249,7 +243,10 @@ Blockly.EusLisp.multiline_quote_ = function(string) {
   var lines = string.split(/\n/g).map(Blockly.EusLisp.quote_);
   // Join with the following, plus a newline:
   // + '\n' +
-  return brack_it('concatenate', 'string', ...lines) + '\n';
+  if (lines.length == 1) {
+    return lines[0];
+  }
+  return brack_it('concatenate', 'string', lines.join(" '(#\\Newline) ")) + '\n';
 };
 
 /**
