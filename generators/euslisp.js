@@ -353,7 +353,10 @@ Blockly.EusLisp.statementToCode = function(block, name) {
 
   if (code && nextBlock) {
     code = this.prefixLines(/** @type {string} */ (code), this.INDENT);
+  } else if (code && code.includes('\n')) {
+    code = this.prefixLines('\n' + code, this.INDENT);
   }
+
   return code;
 };
 
