@@ -107,6 +107,26 @@ Blockly.EusLisp.init = function(workspace) {
     Blockly.EusLisp.variableDB_.reset();
   }
 
+  /**
+   * Given a proposed entity name, generate a name that conforms to the
+   * EusLisp format, excluding some reader macros in the way.
+   * @param {string} name Potentially illegal entity name.
+   * @return {string} Safe entity name.
+   * @private
+   */
+  Blockly.EusLisp.variableDB_.safeName_ = function(name) {
+    if (!name) {
+      name = Blockly.Msg['UNNAMED_KEY'] || 'unnamed';
+    } else {
+      name = name.replace(/[ ,:%]/g, '-');
+      // Reject numbers
+      if (!isNaN(parseFloat(name))) {
+        name = 'my_' + name;
+      }
+    }
+    return name;
+  };
+
   Blockly.EusLisp.variableDB_.setVariableMap(workspace.getVariableMap());
 
   var defvars = [];
@@ -324,3 +344,4 @@ Blockly.EusLisp.nextBlock = function(block, name) {
   var nextBlock = target && target.nextConnection && target.nextConnection.targetBlock();
   return nextBlock;
 };
+
