@@ -341,3 +341,9 @@ Blockly.EusLisp.prefixLines = function(text, prefix) {
   return text;
   // return prefix + text.replace(/(?!\n$)\n/g, '\n' + prefix);
 };
+
+Blockly.EusLisp.nextBlock = function(block, name) {
+  var target = block.getInputTargetBlock(name);
+  var nextBlock = target && target.nextConnection && target.nextConnection.targetBlock();
+  return nextBlock;
+};

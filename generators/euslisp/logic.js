@@ -30,10 +30,14 @@ Blockly.EusLisp['controls_if'] = function(block) {
   if (n == 1) {
     conditionCode = Blockly.EusLisp.valueToCode(block, 'IF0',
         Blockly.EusLisp.ORDER_NONE) || 'nil';
-    branchCode = Blockly.EusLisp.statementToCode(block, 'DO0') ||
-        Blockly.EusLisp.PASS;
-    var elseCode = Blockly.EusLisp.statementToCode(block, 'ELSE') ||
-        Blockly.EusLisp.PASS;
+    branchCode = Blockly.EusLisp.statementToCode(block, 'DO0');
+    if (Blockly.EusLisp.nextBlock(block, 'DO0')) {
+      branchCode = brack_it('progn', branchCode);
+    }
+    var elseCode = Blockly.EusLisp.statementToCode(block, 'ELSE');
+    if (Blockly.EusLisp.nextBlock(block, 'ELSE')) {
+      elseCode = brack_it('progn', elseCode);
+    }
     var code = brack_it('if', conditionCode, branchCode, elseCode);
     return code;
   }
