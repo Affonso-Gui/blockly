@@ -23,27 +23,38 @@ Blockly.EusLisp['controls_if'] = function(block) {
     // Automatic prefix insertion is switched off for this block.  Add manually.
     code += Blockly.EusLisp.injectId(Blockly.EusLisp.STATEMENT_PREFIX, block);
   }
-  do {
-    ++n;
-  } while (block.getInput('IF' + n));
+  do ++n; while (block.getInput('IF' + n));
 
   if (n == 1) {
     conditionCode = Blockly.EusLisp.valueToCode(block, 'IF0',
         Blockly.EusLisp.ORDER_NONE) || 'nil';
     branchCode = Blockly.EusLisp.statementToCode(block, 'DO0');
-    if (Blockly.EusLisp.nextBlock(block, 'DO0')) {
-      branchCode = brack_it('progn', branchCode);
-    }
     var elseCode = Blockly.EusLisp.statementToCode(block, 'ELSE');
-    if (Blockly.EusLisp.nextBlock(block, 'ELSE')) {
-      elseCode = brack_it('progn', elseCode);
+
+    var doNext = Blockly.EusLisp.nextBlock(block, 'DO0');
+    var elseNext = Blockly.EusLisp.nextBlock(block, 'ELSE');
+
+    if (doNext && !elseCode) {
+      var code = brack_it('when', conditionCode, branchCode);
+      return code;
     }
+    if (!branchCode && elseCode) {
+      var code = brack_it('unless', conditionCode, elseCode);
+      return code;
+    }
+    if (doNext || elseNext) {
+      if (doNext) branchCode = brack_it('progn', branchCode);
+      if (elseNext) elseCode = brack_it('progn', elseCode);
+      branchCode = Blockly.EusLisp.prefixLines('\n' + branchCode, Blockly.EusLisp.INDENT);
+      elseCode = Blockly.EusLisp.prefixLines('\n' + elseCode, Blockly.EusLisp.INDENT);
+    }
+
     var code = brack_it('if', conditionCode, branchCode, elseCode);
     return code;
   }
 
   n = 0;
-  var code = '(cond \n';
+  var code = '(cond' + '\n';
   do {
     conditionCode = Blockly.EusLisp.valueToCode(block, 'IF' + n,
         Blockly.EusLisp.ORDER_NONE) || 'nil';
@@ -54,7 +65,9 @@ Blockly.EusLisp['controls_if'] = function(block) {
           Blockly.EusLisp.INDENT) + branchCode;
     }
     if (n != 0) code += '\n';
-    code += Blockly.EusLisp.INDENT + brack_it(conditionCode, branchCode);
+    code += Blockly.EusLisp.prefixLines(
+      brack_it(conditionCode, branchCode),
+      Blockly.EusLisp.INDENT);
     ++n;
   } while (block.getInput('IF' + n));
 

@@ -281,7 +281,8 @@ Blockly.EusLisp.scrub_ = function(block, code, opt_thisOnly) {
   }
   var nextBlock = block.nextConnection && block.nextConnection.targetBlock();
   var nextCode = opt_thisOnly ? '' : Blockly.EusLisp.blockToCode(nextBlock);
-  return commentCode + code + nextCode;
+  var separator = nextCode ? '\n' : '';
+  return separator + commentCode + code + separator + nextCode;
 };
 
 /**
@@ -332,11 +333,36 @@ Blockly.EusLisp.getAdjustedInt = function(block, atId, opt_delta, opt_negate) {
 };
 
 
-Blockly.EusLisp.prefixLines = function(text, prefix) {
-  return text;
-  // return prefix + text.replace(/(?!\n$)\n/g, '\n' + prefix);
+/**
+ * Generate a code string representing the blocks attached to the named
+ * statement input. Indent the code according to EusLisp syntax.
+ * @param {!Blockly.Block} block The block containing the input.
+ * @param {string} name The name of the input.
+ * @return {string} Generated code or '' if no blocks are connected.
+ */
+Blockly.EusLisp.statementToCode = function(block, name) {
+  var targetBlock = block.getInputTargetBlock(name);
+  var nextBlock = this.nextBlock(block, name);
+  var code = this.blockToCode(targetBlock);
+  // Value blocks must return code and order of operations info.
+  // Statement blocks must only return code.
+  if (typeof code != 'string') {
+    throw TypeError('Expecting code from statement block: ' +
+        (targetBlock && targetBlock.type));
+  }
+
+  if (code && nextBlock) {
+    code = this.prefixLines(/** @type {string} */ (code), this.INDENT);
+  }
+  return code;
 };
 
+/**
+ * Return the next block in the chain.
+ * @param {!Blockly.Block} block The block containing the input.
+ * @param {string} name The name of the input.
+ * @return {!Blockly.Block} Next Block or False if no blocks are connected.
+ */
 Blockly.EusLisp.nextBlock = function(block, name) {
   var target = block.getInputTargetBlock(name);
   var nextBlock = target && target.nextConnection && target.nextConnection.targetBlock();

@@ -36,13 +36,13 @@ Blockly.EusLisp.CONTINUE_STATEMENT = '(go :continue)';
 Blockly.EusLisp.addContinueLabel_ = function(branch) {
   if (branch.indexOf(Blockly.EusLisp.CONTINUE_STATEMENT) != -1) {
     // False positives are possible (e.g. a string literal), but are harmless.
-    var code = brack_it('tagbody', branch, ':continue');
+    // var code = `\n(tagbody ${branch}\n :continue)`;
+    var code = '\n' + brack_it('tagbody', branch, '\n :continue');
+    code = Blockly.EusLisp.prefixLines(code, Blockly.EusLisp.INDENT);
     return code;
-  } else {
-    return branch;
   }
+  return branch;
 };
-
 
 
 Blockly.EusLisp['controls_repeat_ext'] = function(block) {
@@ -95,6 +95,10 @@ Blockly.EusLisp['controls_for'] = function(block) {
   var branch = Blockly.EusLisp.statementToCode(block, 'DO');
   branch = Blockly.EusLisp.addLoopTrap(branch, block);
   branch = Blockly.EusLisp.addContinueLabel_(branch);
+  // Check for whitespace to cover for single statements wrapped in continue label
+  if (branch && !(/^\s/.test(branch) || Blockly.EusLisp.nextBlock(block, 'DO'))) {
+    branch = '\n' + Blockly.EusLisp.INDENT + branch;
+  }
 
   var code;
   if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1) &&
@@ -102,15 +106,18 @@ Blockly.EusLisp['controls_for'] = function(block) {
     // All arguments are simple numbers.
     var step = Math.abs(Number(increment));
     var up = Number(argument0) <= Number(argument1);
+
     if (argument0 == 0 && step == 1 && up) {
       code = `(dotimes (${variable0} ${argument1})` +
-             `${branch?'\n  ':''}` + `${branch})`;
-    } else {
-      code = `(do ((${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${step})))` + '\n' +
-             `    ((${up?'>':'<'} ${variable0} ${argument1}))` +
-             `${branch?'\n  ':''}` + `${branch})` + '\n';
+             `${branch})`;
+      return code;
     }
-  } else if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1)) {
+    code = `(do ((${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${step})))` + '\n' +
+           `    ((${up?'>':'<'} ${variable0} ${argument1}))` +
+           `${branch})`;
+    return code;
+  }
+  if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1)) {
     var up = Number(argument0) <= Number(argument1);
     var incVar = Blockly.EusLisp.variableDB_.getDistinctName(
         variable0 + '_inc', Blockly.VARIABLE_CATEGORY_NAME);
@@ -119,44 +126,45 @@ Blockly.EusLisp['controls_for'] = function(block) {
            `(${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${incVar})))` +
            '\n     ' +
            `((${up?'>':'<'} ${variable0} ${argument1}))` +
-           `\n  ${branch})`;
-  } else {
-    // Cache non-trivial values to variables to prevent repeated look-ups.
-    var startVar;
-    if (!argument0.match(/^\w+$/) && !Blockly.isNumber(argument0)) {
-      startVar = Blockly.EusLisp.variableDB_.getDistinctName(
-          variable0 + '_start', Blockly.VARIABLE_CATEGORY_NAME);
-    }
-    var endVar;
-    if (!argument1.match(/^\w+$/) && !Blockly.isNumber(argument1)) {
-      endVar = Blockly.EusLisp.variableDB_.getDistinctName(
-          variable0 + '_end', Blockly.VARIABLE_CATEGORY_NAME);
-    }
-    // Determine loop direction at start, in case one of the bounds
-    // changes during loop execution.
-    var incVar = Blockly.EusLisp.variableDB_.getDistinctName(
-        variable0 + '_inc', Blockly.VARIABLE_CATEGORY_NAME);
-    var step, stepNegative;
-    if (Blockly.isNumber(increment)) {
-      step = Math.abs(increment) + '';
-      stepNegative = '-' + step;
-    } else {
-      step = brack_it('abs', increment);
-      stepNegative = brack_it('-', increment);
-    }
-    var opVar = Blockly.EusLisp.variableDB_.getDistinctName(
-        variable0 + '_op', Blockly.VARIABLE_CATEGORY_NAME);
-
-    code = `(do* (${startVar? brack_it(startVar, argument0) + '\n      ' : ''}` +
-           `${endVar? brack_it(endVar, argument1) + '\n      ' : ''}` +
-           `(${incVar} (if (<= ${startVar? startVar : argument0} ${endVar? endVar : argument1}) ` +
-           `${step} ${stepNegative}))` + '\n      ' +
-           `(${opVar} (if (plusp ${incVar}) #'> #'<))` + '\n      ' +
-           `(${variable0} ${startVar? startVar : argument0} (+ ${variable0} ${incVar})))` +
-           '\n     ' +
-           `((funcall ${opVar} ${variable0} ${endVar? endVar : argument1}))` +
-           `\n  ${branch})`;
+           `${branch})`;
+    return code;
   }
+
+  // Cache non-trivial values to variables to prevent repeated look-ups.
+  var startVar;
+  if (!argument0.match(/^\w+$/) && !Blockly.isNumber(argument0)) {
+    startVar = Blockly.EusLisp.variableDB_.getDistinctName(
+        variable0 + '_start', Blockly.VARIABLE_CATEGORY_NAME);
+  }
+  var endVar;
+  if (!argument1.match(/^\w+$/) && !Blockly.isNumber(argument1)) {
+    endVar = Blockly.EusLisp.variableDB_.getDistinctName(
+        variable0 + '_end', Blockly.VARIABLE_CATEGORY_NAME);
+  }
+  // Determine loop direction at start, in case one of the bounds
+  // changes during loop execution.
+  var incVar = Blockly.EusLisp.variableDB_.getDistinctName(
+      variable0 + '_inc', Blockly.VARIABLE_CATEGORY_NAME);
+  var step, stepNegative;
+  if (Blockly.isNumber(increment)) {
+    step = Math.abs(increment) + '';
+    stepNegative = '-' + step;
+  } else {
+    step = brack_it('abs', increment);
+    stepNegative = brack_it('-', increment);
+  }
+  var opVar = Blockly.EusLisp.variableDB_.getDistinctName(
+      variable0 + '_op', Blockly.VARIABLE_CATEGORY_NAME);
+
+  code = `(do* (${startVar? brack_it(startVar, argument0) + '\n      ' : ''}` +
+         `${endVar? brack_it(endVar, argument1) + '\n      ' : ''}` +
+         `(${incVar} (if (<= ${startVar? startVar : argument0} ${endVar? endVar : argument1}) ` +
+         `${step} ${stepNegative}))` + '\n      ' +
+         `(${opVar} (if (plusp ${incVar}) #'> #'<))` + '\n      ' +
+         `(${variable0} ${startVar? startVar : argument0} (+ ${variable0} ${incVar})))` +
+         '\n     ' +
+         `((funcall ${opVar} ${variable0} ${endVar? endVar : argument1}))` +
+         `${branch})`;
   return code;
 };
 
