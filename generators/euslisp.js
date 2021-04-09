@@ -282,7 +282,7 @@ Blockly.EusLisp.scrub_ = function(block, code, opt_thisOnly) {
   var nextBlock = block.nextConnection && block.nextConnection.targetBlock();
   var nextCode = opt_thisOnly ? '' : Blockly.EusLisp.blockToCode(nextBlock);
   var separator = nextCode ? '\n' : '';
-  return separator + commentCode + code + separator + nextCode;
+  return commentCode + code + separator + nextCode;
 };
 
 /**
@@ -342,7 +342,6 @@ Blockly.EusLisp.getAdjustedInt = function(block, atId, opt_delta, opt_negate) {
  */
 Blockly.EusLisp.statementToCode = function(block, name) {
   var targetBlock = block.getInputTargetBlock(name);
-  var nextBlock = this.nextBlock(block, name);
   var code = this.blockToCode(targetBlock);
   // Value blocks must return code and order of operations info.
   // Statement blocks must only return code.
@@ -351,9 +350,7 @@ Blockly.EusLisp.statementToCode = function(block, name) {
         (targetBlock && targetBlock.type));
   }
 
-  if (code && nextBlock) {
-    code = this.prefixLines(/** @type {string} */ (code), this.INDENT);
-  } else if (code && code.includes('\n')) {
+  if (code && code.includes('\n')) {
     code = this.prefixLines('\n' + code, this.INDENT);
   }
 
