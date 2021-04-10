@@ -19,7 +19,7 @@ Blockly.EusLisp['variables_get'] = function(block) {
   // Variable getter.
   var code = Blockly.EusLisp.variableDB_.getName(block.getFieldValue('VAR'),
       Blockly.VARIABLE_CATEGORY_NAME);
-  return [code, Blockly.EusLisp.ORDER_ATOMIC];
+  return [code, Blockly.EusLisp.ORDER_VARIABLE];
 };
 
 Blockly.EusLisp['variables_set'] = function(block) {

@@ -19,7 +19,8 @@ goog.require('Blockly.EusLisp');
  * Verifies if the loop body contains a continue statement. This works
  * by searching the tree for blocks of type 'controls_flow_statements'
  *
- * @param {!Blockly.Block} block Root block to search for
+ * @param {!Blockly.Block} block Root block to search for.
+ * @return {bool} Whether or not contains a continue statement.
  * @private
  */
 Blockly.EusLisp.hasContinue_ = function(block) {

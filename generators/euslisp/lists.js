@@ -77,22 +77,18 @@ Blockly.EusLisp['lists_indexOf'] = function(block) {
   }
   if (block.getFieldValue('END') == 'FIRST') {
     var functionName = Blockly.EusLisp.provideFunction_(
-        'first-index',
-        ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (item lst)',
-         " (let ((index (position item lst :test #'equal)))",
-         "   (if index",
-         `       ${firstIndexAdjustment('index')})`,
-         `       ${errorIndex})))`]);
+        'first-position',
+        ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (item my-list)',
+         " (let ((index (position item my-list :test #'equal)))",
+         `   (if index ${firstIndexAdjustment('index')} ${errorIndex}))))`]);
     var code = brack_it(functionName, item, list);
     return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
   }
   var functionName = Blockly.EusLisp.provideFunction_(
-      'last-index',
-      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (item lst):',
-       " (let ((index (position item (reverse lst) :test #'equal)))",
-       "     (if index",
-       `         ${lastIndexAdjustment('index', 'lst')}`,
-       `         ${errorIndex}))`]);
+      'last-position',
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (item my-list)',
+       " (let ((index (position item (reverse my-list) :test #'equal)))",
+       `     (if index ${lastIndexAdjustment('index', 'my-list')} ${errorIndex}))`]);
   var code = brack_it(functionName, item, list);
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
@@ -102,13 +98,29 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
   // Note: Until January 2013 this block did not have MODE or WHERE inputs.
   var mode = block.getFieldValue('MODE') || 'GET';
   var where = block.getFieldValue('WHERE') || 'FROM_START';
-  var list = Blockly.EusLisp.valueToCode(block, 'VALUE', Blockly.EusLisp.ORDER_NONE) || '()';
+  var tuple = Blockly.EusLisp.valueToCodeOrder(block, 'VALUE') ||
+      ['()', Blockly.EusLisp.ORDER_ATOMIC];
+  var list = tuple[0];
+  var order = tuple[1];
+
+  var providePopN = function () {
+    var functionName = Blockly.EusLisp.provideFunction_(
+      'pop-n',
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ +
+       ' (my-list n &key from-end)',
+       '  (let ((n (if from-end (- (length my-list) n) n)))',
+       '    (prog1 (nth n my-list)',
+       '      (if (zerop n)',
+       '          (pop my-list)',
+       '          (list-delete my-list n)))))']);
+    return functionName;
+  };
 
   switch (where) {
     case 'FIRST':
       if (mode == 'GET') {
         var code = brack_it('car', list);
-        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+        return [code, Blockly.EusLisp.ORDER_SETF];
       } else if (mode == 'GET_REMOVE') {
         var code = brack_it('pop', list);
         return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
@@ -120,61 +132,72 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
     case 'LAST':
       if (mode == 'GET') {
         var code = brack_it('car', brack_it('last', list));
-        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+        return [code, Blockly.EusLisp.ORDER_SETF];
       } else if (mode == 'GET_REMOVE') {
-        var code = brack_it('prog1',
-                            brack_it('last', list),
-                            brack_it('setq', list, brack_it('butlast', list)));
+        var functionName = providePopN();
+        var code = brack_it(functionName, list, '0', ':from-end t');
         return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else if (mode == 'REMOVE') {
-        var code = brack_it('setq', list, brack_it('butlast', list));
-        return code;
+        switch (order) {
+          case Blockly.EusLisp.ORDER_VARIABLE:
+            var code = brack_it('setq', list, brack_it('butlast', list));
+            return code;
+          case Blockly.EusLisp.ORDER_SETF:
+            var code = brack_it('setf', list, brack_it('butlast', list));
+            return code;
+          default:
+            var code = brack_it('butlast', list);
+            return code;
+        }
       }
       break;
     case 'FROM_START':
       var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
       if (mode == 'GET') {
         var code = brack_it('nth', at, list);
-        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+        return [code, Blockly.EusLisp.ORDER_SETF];
       } else if (mode == 'GET_REMOVE') {
-        var code = brack_it('prog1',
-                            brack_it('nth', at, list),
-                            brack_it('list-delete', list, at));
+        var functionName = providePopN();
+        var code = brack_it(functionName, list, at);
         return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else if (mode == 'REMOVE') {
-        var code = brack_it('list-delete', list, at);
+        var functionName = providePopN();
+        var code = brack_it(functionName, list, at);
         return code;
       }
       break;
     case'FROM_END':
-      var at = Blockly.EusLisp.getAdjustedInt(block, 'AT', 1, true);
-      at = brack_it('-', brack_it('length', list), at);
+      var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
       if (mode == 'GET') {
-        var code = brack_it('nth', at, list);
-        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
-      } else if (mode == 'GET_REMOVE') {
-        var code = brack_it('prog1',
-                            brack_it('nth', at, list),
-                            brack_it('list-delete', list, at));
-        return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
-      } else if (mode == 'REMOVE') {
-        var code = brack_it('list-delete', list, at);
-        return code;
+        var code = brack_it('nth', at, brack_it('reverse', list));
+        return [code, Blockly.EusLisp.ORDER_SETF];
+      } else {
+        // REMOVE || GET_REMOVE
+        var functionName = providePopN();
+        var code = brack_it(functionName, list, at, ':from-end t');
+        if (mode == 'GET_REMOVE') {
+          return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+        } else if (mode == 'REMOVE') {
+          return code;
+        }
       }
       break;
     case 'RANDOM':
-      Blockly.EusLisp.definitions_['import_random'] = 'import random';
       if (mode == 'GET') {
-        var code = brack_it('nth', brack_it('random', brack_it('length', list)), list);
+        var functionName = Blockly.EusLisp.provideFunction_(
+          'random-choice',
+          ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list)',
+           "  (nth (random (length my-list)) my-list))"]);
+        var code = brack_it(functionName, list);
         return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else {
+        // REMOVE || GET_REMOVE
+        providePopN();
         var functionName = Blockly.EusLisp.provideFunction_(
-            'lists-remove-random-item',
-            ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + '(my-list):',
-             "  (let ((r (random (length my-list))))",
-             "    (prog1 ",
-             "        (nth r my-list)",
-             "      (list-delete my-list r)))"]);
+            'pop-random',
+            ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list)',
+             '  (let ((n (random (length my-list))))',
+             '    (pop-n my-list n)))']);
         var code = brack_it(functionName, list);
         if (mode == 'GET_REMOVE') {
           return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
@@ -197,6 +220,18 @@ Blockly.EusLisp['lists_setIndex'] = function(block) {
   var value = Blockly.EusLisp.valueToCode(block, 'TO',
       Blockly.EusLisp.ORDER_NONE) || 'nil';
 
+  var providePushN = function () {
+    var functionName = Blockly.EusLisp.provideFunction_(
+      'push-n',
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ +
+       ' (item my-list n &key from-end)',
+       '  (let ((n (if from-end (- (length my-list) n) n)))',
+       '    (if (zerop n)',
+       '        (push item my-list)',
+       '        (list-insert item n my-list))))']);
+    return functionName;
+  };
+
   switch (where) {
     case 'FIRST':
       if (mode == 'SET') {
@@ -212,7 +247,8 @@ Blockly.EusLisp['lists_setIndex'] = function(block) {
           var code = brack_it('setf', brack_it('car', brack_it('last', list)), value);
           return code;
         } else if (mode == 'INSERT') {
-          var code = brack_it('list-insert', value, brack_it('length', list), list);
+          var functionName = providePushN();
+          var code = brack_it(functionName, value, list, '0', ':from-end t');
           return code;
         }
       break;
@@ -222,18 +258,21 @@ Blockly.EusLisp['lists_setIndex'] = function(block) {
           var code = brack_it('setf', brack_it('nth', at, list), value);
           return code;
         } else if (mode == 'INSERT') {
-          var code = brack_it('list-insert', value, at, list);
+          var functionName = providePushN();
+          var code = brack_it(functionName, value, list, at);
           return code;
         }
       break;
     case 'FROM_END':
-      var at = Blockly.EusLisp.getAdjustedInt(block, 'AT', 1, true);
-      at = brack_it('-', brack_it('length', list), at);
         if (mode == 'SET') {
+          var at = Blockly.EusLisp.getAdjustedInt(block, 'AT', 0, true);
+          at = brack_it('-', brack_it('length', list), at);
           var code = brack_it('setf', brack_it('nth', at, list), value);
           return code;
         } else if (mode == 'INSERT') {
-          var code = brack_it('list-insert', value, at, list);
+          var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
+          var functionName = providePushN();
+          var code = brack_it(functionName, value, list, at, ':from-end t');
           return code;
         }
       break;
@@ -242,7 +281,13 @@ Blockly.EusLisp['lists_setIndex'] = function(block) {
           var code = `(setf (nth (random (length ${list})) ${list}) ${value})`;
           return code;
         } else if (mode == 'INSERT') {
-          var code = `(list-insert ${value} (random (length ${list})) ${list})`;
+          providePushN();
+          var functionName = Blockly.EusLisp.provideFunction_(
+            'push-random',
+            ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (item my-list)',
+             '  (let ((n (random (length my-list))))',
+             '    (push-n item my-list n)))']);
+          var code = brack_it(functionName, value, list);
           return code;
         }
       break;
@@ -294,22 +339,27 @@ Blockly.EusLisp['lists_getSublist'] = function(block) {
 
 Blockly.EusLisp['lists_sort'] = function(block) {
   // Block for sorting a list.
-  var list = (Blockly.EusLisp.valueToCode(block, 'LIST',
-      Blockly.EusLisp.ORDER_NONE) || '()');
+  var tuple = Blockly.EusLisp.valueToCodeOrder(block, 'LIST') ||
+      ['()', Blockly.EusLisp.ORDER_ATOMIC];
+  var list = tuple[0];
+  var order = tuple[1];
   var type = block.getFieldValue('TYPE');
   var direction = block.getFieldValue('DIRECTION');
 
+  if (order == Blockly.EusLisp.ORDER_VARIABLE) {
+    list = brack_it('copy-list', list);
+  }
   switch (type) {
     case 'NUMERIC':
-      var code = `(sort (copy-list ${list}) #'${direction? '<=' : '>='} ` +
+      var code = `(sort ${list} #'${direction? '<=' : '>='} ` +
         "#'(lambda (x) (if (numberp x) x 0)))";
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'TEXT':
-      var code = `(sort (copy-list ${list}) #'string${direction? '<=' : '>='} ` +
+      var code = `(sort ${list} #'string${direction? '<=' : '>='} ` +
         "#'string)";
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'IGNORE_CASE':
-      var code = `(sort (copy-list ${list}) #'string${direction? '<=' : '>='} ` +
+      var code = `(sort ${list} #'string${direction? '<=' : '>='} ` +
         "#'(lambda (x) (string-downcase (string x))))";
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     default:
@@ -333,7 +383,7 @@ Blockly.EusLisp['lists_split'] = function(block) {
         Blockly.EusLisp.ORDER_NONE) || '""';
     var functionName = Blockly.EusLisp.provideFunction_(
       'lists-join',
-      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + '(my-list delim):',
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list delim)',
       "  (apply #'concatenate string",
       "         (string (car my-list))",
       "         (mapcar #'(lambda (a) (concatenate string delim (string a)))",

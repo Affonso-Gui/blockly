@@ -78,7 +78,9 @@ Blockly.EusLisp.addReservedWords(
  * needs auxiliary parenthesis
  */
 Blockly.EusLisp.ORDER_ATOMIC = 0;            // 0 "" ...
-Blockly.EusLisp.ORDER_FUNCTION_CALL = 2;     // ()
+Blockly.EusLisp.ORDER_VARIABLE = 1;          // my-var ...
+Blockly.EusLisp.ORDER_SETF = 2;              // (car lst) (cdr lst) ...
+Blockly.EusLisp.ORDER_FUNCTION_CALL = 3;     // ()
 Blockly.EusLisp.ORDER_NONE = 99;             // (...)
 
 
@@ -276,9 +278,8 @@ Blockly.EusLisp.getAdjustedInt = function(block, atId, opt_delta, opt_negate) {
     delta--;
   }
   var defaultAtIndex = block.workspace.options.oneBasedIndex ? '1' : '0';
-  var atOrder = delta ? Blockly.EusLisp.ORDER_ADDITIVE :
-      Blockly.EusLisp.ORDER_NONE;
-  var at = Blockly.EusLisp.valueToCode(block, atId, atOrder) || defaultAtIndex;
+  var at = Blockly.EusLisp.valueToCode(block, atId,
+      Blockly.EusLisp.ORDER_NONE) || defaultAtIndex;
 
   if (Blockly.isNumber(at)) {
     // If the index is a naked number, adjust it right now.
@@ -308,6 +309,17 @@ Blockly.EusLisp.getAdjustedInt = function(block, atId, opt_delta, opt_negate) {
   return at;
 };
 
+/**
+ * Return the next block in the chain.
+ * @param {!Blockly.Block} block The block containing the input.
+ * @param {string} name The name of the input.
+ * @return {!Blockly.Block} Next Block or False if no blocks are connected.
+ */
+Blockly.EusLisp.nextBlock = function(block, name) {
+  var target = block.getInputTargetBlock(name);
+  var nextBlock = target && target.nextConnection && target.nextConnection.targetBlock();
+  return nextBlock;
+};
 
 /**
  * Generate a code string representing the blocks attached to the named
@@ -334,14 +346,17 @@ Blockly.EusLisp.statementToCode = function(block, name) {
 };
 
 /**
- * Return the next block in the chain.
+ * Generate code representing the specified value input, and its order.
  * @param {!Blockly.Block} block The block containing the input.
  * @param {string} name The name of the input.
- * @return {!Blockly.Block} Next Block or False if no blocks are connected.
+ * @return {string} Generated code or '' if no blocks are connected or the
+ *     specified input does not exist.
+ * @return {number} The order of the generated code.
  */
-Blockly.EusLisp.nextBlock = function(block, name) {
-  var target = block.getInputTargetBlock(name);
-  var nextBlock = target && target.nextConnection && target.nextConnection.targetBlock();
-  return nextBlock;
+Blockly.EusLisp.valueToCodeOrder = function(block, name) {
+  var targetBlock = block.getInputTargetBlock(name);
+  if (!targetBlock) {
+    return '';
+  }
+  return this.blockToCode(targetBlock);
 };
-
