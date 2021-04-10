@@ -265,7 +265,7 @@ Blockly.EusLisp['text_changeCase'] = function(block) {
   // Change capitalization.
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
       Blockly.EusLisp.ORDER_NONE) || '""';
-  switch (Blockly.EusLisp.valueToCode(block, 'TEXT')) {
+  switch (block.getFieldValue('CASE')) {
     case 'UPPERCASE':
       var code = brack_it('string-upcase', text);
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
@@ -273,25 +273,20 @@ Blockly.EusLisp['text_changeCase'] = function(block) {
       var code = brack_it('string-downcase', text);
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'TITLECASE':
-    // Title case is not a native Dart function.  Define one.
-      var functionName = Blockly.Dart.provideFunction_(
-        'text_toTitleCase',
-        ['String ' + Blockly.Dart.FUNCTION_NAME_PLACEHOLDER_ +
-         '(String str) {',
-         '  RegExp exp = new RegExp(r\'\\b\');',
-         '  List<String> list = str.split(exp);',
-         '  final title = new StringBuffer();',
-         '  for (String part in list) {',
-         '    if (part.length > 0) {',
-         '      title.write(part[0].toUpperCase());',
-         '      if (part.length > 0) {',
-         '        title.write(part.substring(1).toLowerCase());',
-         '      }',
-         '    }',
-         '  }',
-         '  return title.toString();',
-         '}']);
-      var code = functionName + '(' + text + ')';
+    // Title case is not a native EusLisp function.  Define one.
+      var functionName = Blockly.EusLisp.provideFunction_(
+        'title-case',
+        ['(defun ' + Blockly.Dart.FUNCTION_NAME_PLACEHOLDER_ + ' (my-string)',
+         '  (let ((tgg t) acc)',
+         '    (dotimes (i (length my-string))',
+         '      (if tgg',
+         '          (push (char-upcase (elt my-string i)) acc)',
+         '          (push (char-downcase (elt my-string i)) acc))',
+         '      (if (position (elt my-string i) (list #\Space #\Newline))',
+         '          (setq tgg t)',
+         '          (setq tgg nil)))',
+         '   (coerce (nreverse acc) string)))']);
+      var code = brack_it(functionName, text);
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
   }
 };
