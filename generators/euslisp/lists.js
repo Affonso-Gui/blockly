@@ -369,25 +369,19 @@ Blockly.EusLisp['lists_sort'] = function(block) {
 
 Blockly.EusLisp['lists_split'] = function(block) {
   // Block for splitting text into a list, or joining a list into text.
+  var value_input = Blockly.EusLisp.valueToCode(block, 'INPUT',
+      Blockly.EusLisp.ORDER_NONE);
+  var value_delim = Blockly.EusLisp.valueToCode(block, 'DELIM',
+      Blockly.EusLisp.ORDER_NONE) || '""';
   var mode = block.getFieldValue('MODE');
   if (mode == 'SPLIT') {
-    var value_input = Blockly.EusLisp.valueToCode(block, 'INPUT',
-        Blockly.EusLisp.ORDER_NONE) || '""';
-    var value_delim = Blockly.EusLisp.valueToCode(block, 'DELIM',
-        Blockly.EusLisp.ORDER_NONE);
-    var code = value_input + '.split(' + value_delim + ')';
+    value_input = value_input || '""';
+    Blockly.EusLisp.provideSearchAll();
+    var functionName = Blockly.EusLisp.provideSplit();
+    var code = brack_it(functionName, value_input, value_delim);
   } else if (mode == 'JOIN') {
-    var value_input = Blockly.EusLisp.valueToCode(block, 'INPUT',
-        Blockly.EusLisp.ORDER_NONE) || '()';
-    var value_delim = Blockly.EusLisp.valueToCode(block, 'DELIM',
-        Blockly.EusLisp.ORDER_NONE) || '""';
-    var functionName = Blockly.EusLisp.provideFunction_(
-      'lists-join',
-      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list delim)',
-      "  (apply #'concatenate string",
-      "         (string (car my-list))",
-      "         (mapcar #'(lambda (a) (concatenate string delim (string a)))",
-      "                 (cdr my-list))))"]);
+    value_input = value_input || '()';
+    var functionName = Blockly.EusLisp.provideJoin();
     var code = brack_it(functionName, value_input, value_delim);
   } else {
     throw Error('Unknown mode: ' + mode);
