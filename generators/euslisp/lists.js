@@ -184,10 +184,7 @@ Blockly.EusLisp['lists_getIndex'] = function(block) {
       break;
     case 'RANDOM':
       if (mode == 'GET') {
-        var functionName = Blockly.EusLisp.provideFunction_(
-          'random-choice',
-          ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list)',
-           "  (nth (random (length my-list)) my-list))"]);
+        var functionName = Blockly.EusLisp.provideRandomChoice();
         var code = brack_it(functionName, list);
         return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
       } else {
@@ -344,22 +341,22 @@ Blockly.EusLisp['lists_sort'] = function(block) {
   var list = tuple[0];
   var order = tuple[1];
   var type = block.getFieldValue('TYPE');
-  var direction = block.getFieldValue('DIRECTION');
+  var ascending = block.getFieldValue('DIRECTION') === '1' ? true : false;
 
   if (order == Blockly.EusLisp.ORDER_VARIABLE) {
     list = brack_it('copy-list', list);
   }
   switch (type) {
     case 'NUMERIC':
-      var code = `(sort ${list} #'${direction? '<=' : '>='} ` +
+      var code = `(sort ${list} #'${ascending? '<=' : '>='} ` +
         "#'(lambda (x) (if (numberp x) x 0)))";
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'TEXT':
-      var code = `(sort ${list} #'string${direction? '<=' : '>='} ` +
+      var code = `(sort ${list} #'string${ascending? '<=' : '>='} ` +
         "#'string)";
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'IGNORE_CASE':
-      var code = `(sort ${list} #'string${direction? '<=' : '>='} ` +
+      var code = `(sort ${list} #'string${ascending? '<=' : '>='} ` +
         "#'(lambda (x) (string-downcase (string x))))";
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     default:

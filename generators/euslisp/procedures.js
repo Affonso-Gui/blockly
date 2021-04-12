@@ -95,7 +95,7 @@ Blockly.EusLisp['procedures_ifreturn'] = function(block) {
   } else {
     value = '';
   }
-  code = brack_it('if', condition, brack_it('return', value));
+  var code = brack_it('if', condition, brack_it('return', value));
   if (Blockly.EusLisp.STATEMENT_SUFFIX) {
     // Inject any statement suffix here since the regular one at the end
     // will not get executed if the return is triggered.

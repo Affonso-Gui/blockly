@@ -14,6 +14,14 @@ goog.provide('Blockly.EusLisp.texts');
 
 goog.require('Blockly.EusLisp');
 
+Blockly.EusLisp.provideRandomChoice = function () {
+  var functionName = Blockly.EusLisp.provideFunction_(
+    'random-choice',
+    ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-seq)',
+     '  (elt my-seq (random (length my-seq))))']);
+  return functionName;
+};
+
 Blockly.EusLisp.provideSearch = function() {
   var functionName = Blockly.EusLisp.provideFunction_(
     'search',
@@ -51,15 +59,18 @@ Blockly.EusLisp.provideJoin = function () {
   var functionName = Blockly.EusLisp.provideFunction_(
     'join',
     ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list delim)',
-     "  (apply #'concatenate string",
-     "    (butlast",
-     "      (mapcar",
-     "        #'(lambda (a) (concatenate string (string a) delim))",
-     "        my-list))))"]);
+     '  (or',
+     "   (apply #'concatenate string",
+     '          (butlast',
+     '           (mapcan',
+     "            #'(lambda (a) (list (string a) delim))",
+     '            my-list)))',
+     '   ""))']);
   return functionName;
 };
 
 Blockly.EusLisp.provideSplit = function () {
+  this.provideSearchAll();
   var functionName = Blockly.EusLisp.provideFunction_(
     'split',
     ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-string delim)',
@@ -83,9 +94,9 @@ Blockly.EusLisp['text'] = function(block) {
 
 Blockly.EusLisp['text_multiline'] = function(block) {
   // Text value.
-  var code = Blockly.EusLisp.multiline_quote_(block.getFieldValue('TEXT'));
-  var order = code.startsWith('(') != -1 ? Blockly.EusLisp.ORDER_FUNCTION_CALL :
-      Blockly.EusLisp.ORDER_ATOMIC;
+  var code = Blockly.EusLisp.quote_(block.getFieldValue('TEXT'));
+  var order = Blockly.EusLisp.text.forceString_.strRegExp.test(code) ?
+      Blockly.EusLisp.ORDER_ATOMIC : Blockly.EusLisp.ORDER_FUNCTION_CALL;
   return [code, order];
 };
 
@@ -105,9 +116,9 @@ Blockly.EusLisp.text.forceString_ = function(value) {
 };
 
 /**
- * Regular expression to detect a single-quoted string literal.
+ * Regular expression to detect a double-quoted string literal.
  */
-Blockly.EusLisp.text.forceString_.strRegExp = /^\s*'([^']|\\')*'\s*$/;
+Blockly.EusLisp.text.forceString_.strRegExp = /^\s*"([^"]|\\")*"\s*$/;
 
 Blockly.EusLisp['text_join'] = function(block) {
   // Create a string made up of any number of elements of any type.
@@ -149,8 +160,9 @@ Blockly.EusLisp['text_append'] = function(block) {
       Blockly.VARIABLE_CATEGORY_NAME);
   var value = Blockly.EusLisp.valueToCode(block, 'TEXT',
       Blockly.EusLisp.ORDER_NONE) || '""';
-  var code = brack_it('concatenate', 'string', brack_it('string', varName), 
-      Blockly.EusLisp.text.forceString_(value)[0]) + '\n';
+  var code = brack_it('concatenate', 'string', varName, 
+      Blockly.EusLisp.text.forceString_(value)[0]);
+  code = brack_it('setq', varName, code);
   return code;
 };
 
@@ -194,21 +206,22 @@ Blockly.EusLisp['text_charAt'] = function(block) {
   var text = Blockly.EusLisp.valueToCode(block, 'VALUE', Blockly.EusLisp.ORDER_NONE) || '""';
   switch (where) {
     case 'FIRST':
-      var code = brack_it('elt', text, 0);
+      var code = brack_it('elt', text, '0');
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'LAST':
-      var code = brack_it('elt', text, brack_it('1-', brack_it('length', text)));
+    var code = brack_it('elt', brack_it('reverse', text), '0');
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'FROM_START':
       var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
       var code = brack_it('elt', text, at);
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'FROM_END':
-      var at = Blockly.EusLisp.getAdjustedInt(block, 'AT', 1, true);
-      var code = brack_it('elt', text, brack_it('-', brack_it('length', text), at));
+      var at = Blockly.EusLisp.getAdjustedInt(block, 'AT');
+      var code = brack_it('elt', at, brack_it('reverse', text));
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'RANDOM':
-      var code = brack_it('elt', text, brack_it('random', brack_it('length', text)));
+      var functionName = Blockly.EusLisp.provideRandomChoice();
+      var code = brack_it(functionName, text);
       return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
   }
   throw Error('Unhandled option (text_charAt).');
@@ -223,15 +236,13 @@ Blockly.EusLisp['text_getSubstring'] = function(block) {
   switch (where1) {
     case 'FROM_START':
       var at1 = Blockly.EusLisp.getAdjustedInt(block, 'AT1');
-      if (at1 == '0') {
-        at1 = '';
-      }
       break;
     case 'FROM_END':
       var at1 = Blockly.EusLisp.getAdjustedInt(block, 'AT1', 1, true);
+      at1 = brack_it('-', brack_it('length', text), at1);
       break;
     case 'FIRST':
-      var at1 = '';
+      var at1 = '0';
       break;
     default:
       throw Error('Unhandled option (text_getSubstring)');
@@ -241,14 +252,11 @@ Blockly.EusLisp['text_getSubstring'] = function(block) {
       var at2 = Blockly.EusLisp.getAdjustedInt(block, 'AT2', 1);
       break;
     case 'FROM_END':
-      var at2 = Blockly.EusLisp.getAdjustedInt(block, 'AT2', 0, true);
-      // Ensure that if the result calculated is 0 that sub-sequence will
-      // include all elements as expected.
-      if (!Blockly.isNumber(String(at2))) {
-        Blockly.EusLisp.definitions_['import_sys'] = 'import sys';
-        at2 += ' or sys.maxsize';
-      } else if (at2 == '0') {
+      var at2 = Blockly.EusLisp.getAdjustedInt(block, 'AT2', 0);
+      if (at2 == 0) {
         at2 = '';
+      } else {
+        at2 = brack_it('-', brack_it('length', text), at2);
       }
       break;
     case 'LAST':
@@ -276,13 +284,13 @@ Blockly.EusLisp['text_changeCase'] = function(block) {
     // Title case is not a native EusLisp function.  Define one.
       var functionName = Blockly.EusLisp.provideFunction_(
         'title-case',
-        ['(defun ' + Blockly.Dart.FUNCTION_NAME_PLACEHOLDER_ + ' (my-string)',
+        ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-string)',
          '  (let ((tgg t) acc)',
          '    (dotimes (i (length my-string))',
          '      (if tgg',
          '          (push (char-upcase (elt my-string i)) acc)',
          '          (push (char-downcase (elt my-string i)) acc))',
-         '      (if (position (elt my-string i) (list #\Space #\Newline))',
+         '      (if (position (elt my-string i) (list #\\Space #\\Newline))',
          '          (setq tgg t)',
          '          (setq tgg nil)))',
          '   (coerce (nreverse acc) string)))']);
@@ -295,8 +303,8 @@ Blockly.EusLisp['text_trim'] = function(block) {
   // Trim spaces.
   var OPERATORS = {
     'LEFT': 'string-left-trim',
-    'RIGHT': 'string-trim',
-    'BOTH': 'string-right-trim'
+    'RIGHT': 'string-right-trim',
+    'BOTH': 'string-trim'
   };
   var operator = OPERATORS[block.getFieldValue('MODE')];
   var text = Blockly.EusLisp.valueToCode(block, 'TEXT',
@@ -317,10 +325,10 @@ Blockly.EusLisp['text_prompt_ext'] = function(block) {
   // Prompt function.
   var functionName = Blockly.EusLisp.provideFunction_(
       'prompt',
-      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + '(msg)',
-       "  (princ msg)",
-       "  (finish-output)",
-       "  (read-line)"]);
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (msg)',
+       '  (princ msg)',
+       '  (finish-output)',
+       '  (read-line))']);
   if (block.getField('TEXT')) {
     // Internal message.
     var msg = Blockly.EusLisp.quote_(block.getFieldValue('TEXT'));
@@ -332,7 +340,7 @@ Blockly.EusLisp['text_prompt_ext'] = function(block) {
   var code = brack_it(functionName, msg);
   var toNumber = block.getFieldValue('TYPE') == 'NUMBER';
   if (toNumber) {
-    code = brack_it('read_from_string', code);
+    code = brack_it('read-from-string', code);
   }
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
@@ -347,7 +355,7 @@ Blockly.EusLisp['text_count'] = function(block) {
   Blockly.EusLisp.provideSearchAll();
   var functionName = Blockly.EusLisp.provideFunction_(
       'count-substring',
-      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + '(sub str)',
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (sub str)',
        '  (length (search-all sub str)))']);
   var code = brack_it(functionName, substring, text);
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
@@ -360,13 +368,13 @@ Blockly.EusLisp['text_replace'] = function(block) {
       Blockly.EusLisp.ORDER_NONE) || '""';
   var to = Blockly.EusLisp.valueToCode(block, 'TO',
       Blockly.EusLisp.ORDER_NONE) || '""';
-  Blockly.EusLisp.provideJoin();
   Blockly.EusLisp.provideSplit();
+  Blockly.EusLisp.provideJoin();
   var functionName = Blockly.EusLisp.provideFunction_(
       'replace-substring',
-      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + '(newitem olditem my-string)',
+      ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (newitem olditem my-string)',
        '  (join (split str olditem) newitem))']);
-  var code = brack_it(functionName, substring, text);
+  var code = brack_it(functionName, to, from, text);
   return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 

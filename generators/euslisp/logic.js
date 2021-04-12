@@ -19,6 +19,7 @@ Blockly.EusLisp['controls_if'] = function(block) {
   // If/elseif/else condition.
   var n = 0;
   var branchCode, conditionCode;
+  var code = '';
   if (Blockly.EusLisp.STATEMENT_PREFIX) {
     // Automatic prefix insertion is switched off for this block.  Add manually.
     code += Blockly.EusLisp.injectId(Blockly.EusLisp.STATEMENT_PREFIX, block);
@@ -35,11 +36,11 @@ Blockly.EusLisp['controls_if'] = function(block) {
     var elseNext = Blockly.EusLisp.nextBlock(block, 'ELSE');
 
     if (doNext && !elseCode) {
-      var code = brack_it('when', conditionCode, branchCode);
+      code = brack_it('when', conditionCode, branchCode);
       return code;
     }
     if (!branchCode && elseCode) {
-      var code = brack_it('unless', conditionCode, elseCode);
+      code = brack_it('unless', conditionCode, elseCode);
       return code;
     }
     if (doNext || elseNext) {
@@ -49,12 +50,12 @@ Blockly.EusLisp['controls_if'] = function(block) {
       elseCode = Blockly.EusLisp.prefixLines('\n' + elseCode, Blockly.EusLisp.INDENT);
     }
 
-    var code = brack_it('if', conditionCode, branchCode, elseCode);
+    code = brack_it('if', conditionCode, branchCode, elseCode);
     return code;
   }
 
   n = 0;
-  var code = '(cond' + '\n';
+  code += '(cond' + '\n';
   do {
     conditionCode = Blockly.EusLisp.valueToCode(block, 'IF' + n,
         Blockly.EusLisp.ORDER_NONE) || 'nil';

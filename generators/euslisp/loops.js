@@ -133,7 +133,6 @@ Blockly.EusLisp['controls_for'] = function(block) {
     branch = '\n' + Blockly.EusLisp.INDENT + branch;
   }
 
-  var code;
   if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1) &&
       Blockly.isNumber(increment)) {
     // All arguments are simple numbers.
@@ -141,13 +140,13 @@ Blockly.EusLisp['controls_for'] = function(block) {
     var up = Number(argument0) <= Number(argument1);
 
     if (argument0 == 0 && step == 1 && up) {
-      code = `(dotimes (${variable0} ${argument1})` +
-             `${branch})`;
+      var code = `(dotimes (${variable0} ${argument1})` +
+                 `${branch})`;
       return code;
     }
-    code = `(do ((${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${step})))` + '\n' +
-           `    ((${up?'>':'<'} ${variable0} ${argument1}))` +
-           `${branch})`;
+    var code = `(do ((${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${step})))` + '\n' +
+               `    ((${up?'>':'<'} ${variable0} ${argument1}))` +
+               `${branch})`;
     return code;
   }
   if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1)) {
@@ -155,11 +154,11 @@ Blockly.EusLisp['controls_for'] = function(block) {
     var incVar = Blockly.EusLisp.variableDB_.getDistinctName(
         variable0 + '_inc', Blockly.VARIABLE_CATEGORY_NAME);
 
-    code = `(do* ((${incVar} (abs ${increment}))` + '\n      ' +
-           `(${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${incVar})))` +
-           '\n     ' +
-           `((${up?'>':'<'} ${variable0} ${argument1}))` +
-           `${branch})`;
+    var code = `(do* ((${incVar} (abs ${increment}))` + '\n      ' +
+               `(${variable0} ${argument0} (${up?'+':'-'} ${variable0} ${incVar})))` +
+               '\n     ' +
+               `((${up?'>':'<'} ${variable0} ${argument1}))` +
+               `${branch})`;
     return code;
   }
 
@@ -189,15 +188,15 @@ Blockly.EusLisp['controls_for'] = function(block) {
   var opVar = Blockly.EusLisp.variableDB_.getDistinctName(
       variable0 + '_op', Blockly.VARIABLE_CATEGORY_NAME);
 
-  code = `(do* (${startVar? brack_it(startVar, argument0) + '\n      ' : ''}` +
-         `${endVar? brack_it(endVar, argument1) + '\n      ' : ''}` +
-         `(${incVar} (if (<= ${startVar? startVar : argument0} ${endVar? endVar : argument1}) ` +
-         `${step} ${stepNegative}))` + '\n      ' +
-         `(${opVar} (if (plusp ${incVar}) #'> #'<))` + '\n      ' +
-         `(${variable0} ${startVar? startVar : argument0} (+ ${variable0} ${incVar})))` +
-         '\n     ' +
-         `((funcall ${opVar} ${variable0} ${endVar? endVar : argument1}))` +
-         `${branch})`;
+  var code = `(do* (${startVar? brack_it(startVar, argument0) + '\n      ' : ''}` +
+            `${endVar? brack_it(endVar, argument1) + '\n      ' : ''}` +
+            `(${incVar} (if (<= ${startVar? startVar : argument0} ${endVar? endVar : argument1}) ` +
+            `${step} ${stepNegative}))` + '\n      ' +
+            `(${opVar} (if (plusp ${incVar}) #'> #'<))` + '\n      ' +
+            `(${variable0} ${startVar? startVar : argument0} (+ ${variable0} ${incVar})))` +
+            '\n     ' +
+            `((funcall ${opVar} ${variable0} ${endVar? endVar : argument1}))` +
+            `${branch})`;
   return code;
 };
 

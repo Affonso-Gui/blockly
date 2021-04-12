@@ -51,80 +51,60 @@ Blockly.EusLisp['math_arithmetic'] = function(block) {
 Blockly.EusLisp['math_single'] = function(block) {
   // Math operators with single operand.
   var operator = block.getFieldValue('OP');
-  var code;
-  var arg;
-  if (operator == 'NEG') {
-    // Negation is a special case given its different operator precedence.
-    code = Blockly.EusLisp.valueToCode(block, 'NUM',
+  var arg = Blockly.EusLisp.valueToCode(block, 'NUM',
         Blockly.EusLisp.ORDER_NONE) || '0';
-    return [brack_it('-', code), Blockly.EusLisp.ORDER_FUNCTION_CALL];
-  }
-  if (operator == 'SIN' || operator == 'COS' || operator == 'TAN') {
-    arg = Blockly.EusLisp.valueToCode(block, 'NUM',
-        Blockly.EusLisp.ORDER_NONE) || '0';
-  } else {
-    arg = Blockly.EusLisp.valueToCode(block, 'NUM',
-        Blockly.EusLisp.ORDER_NONE) || '0';
-  }
-  // First, handle cases which generate values that don't need parentheses
-  // wrapping the code.
   switch (operator) {
+    case 'NEG':
+      var code = brack_it('-', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ABS':
-      code = brack_it('abs', arg);
-      break;
+      var code = brack_it('abs', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ROOT':
-      code = brack_it('sqrt', arg);
-      break;
+      var code = brack_it('sqrt', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'LN':
-      code = brack_it('log', arg);
-      break;
+      var code = brack_it('log', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'LOG10':
-      code = brack_it('log', arg, '10');
-      break;
+      var code = brack_it('log', arg, '10');
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'EXP':
-      code = brack_it('exp', arg);
-      break;
+      var code = brack_it('exp', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'POW10':
-      code = brack_it('expt', '10', arg);
-      break;
+      var code = brack_it('expt', '10', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ROUND':
-      code = brack_it('round', arg);
-      break;
+      var code = brack_it('round', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ROUNDUP':
-      code = brack_it('ceiling', arg);
-      break;
+      var code = brack_it('ceiling', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ROUNDDOWN':
-      code = brack_it('floor', arg);
-      break;
+      var code = brack_it('floor', arg);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'SIN':
-      code = brack_it('sin', brack_it('deg2rad', arg));
-      break;
+      var code = brack_it('sin', brack_it('deg2rad', arg));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'COS':
-      code = brack_it('cos', brack_it('deg2rad', arg));
-      break;
+      var code = brack_it('cos', brack_it('deg2rad', arg));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'TAN':
-      code = brack_it('tan', brack_it('deg2rad', arg));
-      break;
-  }
-  if (code) {
-    return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
-  }
-  // Second, handle cases which generate values that may need parentheses
-  // wrapping the code.
-  switch (operator) {
+      var code = brack_it('tan', brack_it('deg2rad', arg));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ASIN':
-      code = brack_it('rad2deg', brack_it('asin', arg));
-      break;
+      var code = brack_it('rad2deg', brack_it('asin', arg));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ACOS':
-      code = brack_it('rad2deg', brack_it('acos', arg));
-      break;
+      var code = brack_it('rad2deg', brack_it('acos', arg));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'ATAN':
-      code = brack_it('rad2deg', brack_it('atan', arg));
-      break;
+      var code = brack_it('rad2deg', brack_it('atan', arg));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     default:
       throw Error('Unknown math operator: ' + operator);
   }
-  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_constant'] = function(block) {
@@ -145,12 +125,36 @@ Blockly.EusLisp['math_constant'] = function(block) {
 Blockly.EusLisp['math_number_property'] = function(block) {
   // Check if a number is even, odd, prime, whole, positive, or negative
   // or if it is divisible by certain number. Returns true or false.
+  var operator = block.getFieldValue('PROPERTY');
   var number_to_check = Blockly.EusLisp.valueToCode(block, 'NUMBER_TO_CHECK',
       Blockly.EusLisp.ORDER_NONE) || '0';
-  var dropdown_property = block.getFieldValue('PROPERTY');
-  var code;
-  if (dropdown_property == 'PRIME') {
-    var functionName = Blockly.EusLisp.provideFunction_(
+  switch (operator) {
+    case 'EVEN':
+      var code = brack_it('evenp', number_to_check);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    case 'ODD':
+      var code = brack_it('oddp', number_to_check);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    case 'WHOLE':
+      var code = brack_it('zerop', brack_it('mod', number_to_check, 1));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    case 'POSITIVE':
+      var code = brack_it('plusp', number_to_check);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    case 'NEGATIVE':
+      var code = brack_it('minusp', number_to_check);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    case 'DIVISIBLE_BY':
+      var divisor = Blockly.EusLisp.valueToCode(block, 'DIVISOR',
+          Blockly.EusLisp.ORDER_NONE);
+      // If 'divisor' is some code that evals to 0, Python will raise an error.
+      if (!divisor || divisor == '0') {
+        return ['nil', Blockly.EusLisp.ORDER_ATOMIC];
+      }
+      var code = brack_it('zerop', brack_it('mod', number_to_check, divisor));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    case 'PRIME':
+      var functionName = Blockly.EusLisp.provideFunction_(
         'primep',
         ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (n)',
          ";; https://en.wikipedia.org/wiki/Primality_test#Naive_methods",
@@ -168,36 +172,11 @@ Blockly.EusLisp['math_number_property'] = function(block) {
          "       (if (or (zerop (mod n (1- x)))",
          "               (zerop (mod n (1+ x))))",
          "           (return nil))))))"]);
-    code = brack_it(functionName, number_to_check);
-    return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+      var code = brack_it(functionName, number_to_check);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
+    default:
+      throw Error('Unknown math operator: ' + operator);
   }
-  switch (dropdown_property) {
-    case 'EVEN':
-      code = brack_it('evenp', number_to_check);
-      break;
-    case 'ODD':
-      code = brack_it('oddp', number_to_check);
-      break;
-    case 'WHOLE':
-      code = brack_it('zerop', brack_it('mod', number_to_check, 1));
-      break;
-    case 'POSITIVE':
-      code = brack_it('plusp', number_to_check);
-      break;
-    case 'NEGATIVE':
-      code = brack_it('minusp', number_to_check);
-      break;
-    case 'DIVISIBLE_BY':
-      var divisor = Blockly.EusLisp.valueToCode(block, 'DIVISOR',
-          Blockly.EusLisp.ORDER_NONE);
-      // If 'divisor' is some code that evals to 0, Python will raise an error.
-      if (!divisor || divisor == '0') {
-        return ['nil', Blockly.EusLisp.ORDER_ATOMIC];
-      }
-      code = brack_it('zerop', brack_it('mod', number_to_check, divisor));
-      break;
-  }
-  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_change'] = function(block) {
@@ -221,23 +200,22 @@ Blockly.EusLisp['math_trig'] = Blockly.EusLisp['math_single'];
 
 Blockly.EusLisp['math_on_list'] = function(block) {
   // Math functions for lists.
-  var func = block.getFieldValue('OP');
+  var operator = block.getFieldValue('OP');
   var list = Blockly.EusLisp.valueToCode(block, 'LIST',
       Blockly.EusLisp.ORDER_NONE) || 'nil';
-  var code;
-  switch (func) {
+  switch (operator) {
     case 'SUM':
-      code = brack_it('reduce', "#'+", list);
-      break;
+      var code = brack_it('reduce', "#'+", list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'MIN':
-      code = brack_it('reduce', "#'min", list);
-      break;
+      var code = brack_it('reduce', "#'min", list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'MAX':
-      code = brack_it('reduce', "#'max", list);
-      break;
+      var code = brack_it('reduce', "#'max", list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'AVERAGE':
-      code = brack_it('vmean', brack_it('remove-if-not', "#'numberp", list));
-      break;
+      var code = brack_it('vmean', list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'MEDIAN':
       var functionName = Blockly.EusLisp.provideFunction_(
           'median',
@@ -251,8 +229,8 @@ Blockly.EusLisp['math_on_list'] = function(block) {
            "                  (nth (1- (/ (length local-list) 2)) local-list))",
            "               2.0)",
            "            (nth (/ (1- (length local-list)) 2) local-list)))))"]);
-      code = brack_it(functionName, list);
-      break;
+      var code = brack_it(functionName, list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'MODE':
       var functionName = Blockly.EusLisp.provideFunction_(
           'modes',
@@ -264,22 +242,18 @@ Blockly.EusLisp['math_on_list'] = function(block) {
            "                          (remove-duplicates my-list :test #'equal)))",
            "          (max-count (reduce #'max (mapcar #'cdr counts))))",
            "     (mapcan #'(lambda (a) (if (= (cdr a) max-count) (list (car a)))) counts)))"]);
-      code = brack_it(functionName, list);
-      break;
+      var code = brack_it(functionName, list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'STD_DEV':
-      code = brack_it('sqrt', brack_it('variance', list));
-      break;
+      var code = brack_it('sqrt', brack_it('variance', list));
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     case 'RANDOM':
-      var functionName = Blockly.EusLisp.provideFunction_(
-        'random-choice',
-        ['(defun ' + Blockly.EusLisp.FUNCTION_NAME_PLACEHOLDER_ + ' (my-list)',
-         "  (nth (random (length my-list)) my-list))"]);
-      code = brack_it(functionName, list);
-      break;
+      var functionName = Blockly.EusLisp.provideRandomChoice();
+      var code = brack_it(functionName, list);
+      return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
     default:
-      throw Error('Unknown operator: ' + func);
+      throw Error('Unknown math operator: ' + operator);
   }
-  return [code, Blockly.EusLisp.ORDER_FUNCTION_CALL];
 };
 
 Blockly.EusLisp['math_modulo'] = function(block) {
